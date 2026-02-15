@@ -1,7 +1,7 @@
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
-from config import settings
+from backend.config import settings
 
 # Use SQLite for development if no DB URL is provided
 SQLALCHEMY_DATABASE_URL = settings.DATABASE_URL or "sqlite:///./legal_ai.db"

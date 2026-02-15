@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from routers import auth, verdicts, chat, cases, schedule, judgments
-from config import settings
+from backend.routers import auth, verdicts, chat, cases, schedule, judgments
+from backend.config import settings
 
 app = FastAPI(
     title="Legal AI Assistant API",
@@ -9,9 +9,9 @@ app = FastAPI(
     version="1.0.0"
 )
 
-from database import engine, Base
+from backend.database import engine, Base
 # Ensure all models are imported so tables are created
-from models import user as user_model, schedule as schedule_model, case as case_model 
+from backend.models import user as user_model, schedule as schedule_model, case as case_model 
 Base.metadata.create_all(bind=engine)
 
 # CORS Configuration

@@ -1,7 +1,7 @@
 import requests
 import os
 from datetime import datetime
-from config import settings
+from backend.config import settings
 
 class AIService:
     def __init__(self):

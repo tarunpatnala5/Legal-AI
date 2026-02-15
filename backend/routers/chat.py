@@ -4,12 +4,12 @@ from sqlalchemy.sql import func
 from datetime import datetime
 from typing import List, Optional
 from pydantic import BaseModel
-from services.ai_service import ai_service
-from database import get_db
-from models.chat import ChatSession, ChatMessage
-from models.user import User
-from routers.auth import get_current_user
-from models import case as case_model
+from backend.services.ai_service import ai_service
+from backend.database import get_db
+from backend.models.chat import ChatSession, ChatMessage
+from backend.models.user import User
+from backend.routers.auth import get_current_user
+from backend.models import case as case_model
 import shutil
 import os
 

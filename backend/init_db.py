@@ -4,8 +4,8 @@ import os
 # Add the parent directory to sys.path to allow importing 'backend' module
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from database import engine, Base
-from models import user, case, schedule, history, chat
+from backend.database import engine, Base
+from backend.models import user, case, schedule, history, chat
 
 def init_db():
     print("Creating database tables...")

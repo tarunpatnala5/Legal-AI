@@ -1,6 +1,6 @@
 from sqlalchemy import Column, Integer, String, DateTime, ForeignKey
 from sqlalchemy.sql import func
-from database import Base
+from backend.database import Base
 
 class BrowsingHistory(Base):
     __tablename__ = "history"
