@@ -2,7 +2,7 @@ import axios from 'axios';
 
 // Create axios instance with base URL pointing to FastAPI backend
 const api = axios.create({
-    baseURL: 'https://legal-ai-whhe.onrender.com',// Update for production
+    baseURL: 'https://legal-ai-whhe.onrender.com/api',// Update for production
     headers: {
         'Content-Type': 'application/json',
     },

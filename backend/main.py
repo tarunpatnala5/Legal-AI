@@ -16,7 +16,7 @@ Base.metadata.create_all(bind=engine)
 
 # CORS Configuration
 origins = [
-    "https://legal-ai-whhe.onrender.com",
+    "https://legal-ai-whhe.onrender.com/api",
     # Add production domains here
     "*"  # For development convenience
 ]
