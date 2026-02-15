@@ -22,7 +22,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
             setTheme(savedTheme);
             document.documentElement.classList.toggle("dark", savedTheme === "dark");
         } else {
-            // Default to light
+            // Default to dark
             document.documentElement.classList.remove("dark");
         }
     }, []);

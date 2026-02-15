@@ -15,9 +15,9 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     return (
         <div className="flex bg-background min-h-screen text-foreground transition-colors duration-300">
             <SideNavbar />
-            <main className="flex-1 flex flex-col h-screen overflow-hidden w-full lg:w-auto">
+            <main className="flex-1 flex flex-col h-screen overflow-hidden">
                 <TopNavbar />
-                <div className="flex-1 overflow-auto p-4 sm:p-6 scrollbar-thin scrollbar-thumb-slate-300 dark:scrollbar-thumb-slate-700">
+                <div className="flex-1 overflow-auto p-6 scrollbar-thin scrollbar-thumb-slate-300 dark:scrollbar-thumb-slate-700">
                     {children}
                 </div>
             </main>
