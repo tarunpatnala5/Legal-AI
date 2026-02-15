@@ -7,9 +7,9 @@ from passlib.context import CryptContext
 from typing import Optional
 from pydantic import BaseModel
 
-from backend.database import get_db
-from backend.models import user as user_model
-from backend.config import settings
+from database import get_db
+from models import user as user_model
+from config import settings
 
 router = APIRouter()
 

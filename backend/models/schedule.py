@@ -1,6 +1,6 @@
 from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Boolean, Text
 from sqlalchemy.sql import func
-from backend.database import Base
+from database import Base
 
 class Schedule(Base):
     __tablename__ = "schedules"

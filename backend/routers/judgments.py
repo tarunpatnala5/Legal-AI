@@ -1,5 +1,5 @@
 from fastapi import APIRouter, HTTPException
-from backend.services.sci_scraper import fetch_live_judgments
+from services.sci_scraper import fetch_live_judgments
 from typing import List, Optional
 from pydantic import BaseModel
 

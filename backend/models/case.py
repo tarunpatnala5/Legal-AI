@@ -1,7 +1,7 @@
 from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Text
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
-from backend.database import Base
+from database import Base
 
 class CaseDocument(Base):
     __tablename__ = "cases"
