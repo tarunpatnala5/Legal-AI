@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Calendar as CalendarIcon, Clock, Plus, Bell, BellOff, CheckCircle, Loader2, X, Trash2 } from "lucide-react";
+import { Calendar as CalendarIcon, Clock, Plus, Bell, BellOff, CheckCircle, Loader2, X, Trash2, ChevronLeft, ChevronRight } from "lucide-react";
 import api from "@/lib/api";
 import toast from "react-hot-toast";
 import { cn } from "@/lib/utils";
@@ -15,10 +15,16 @@ interface ScheduleEvent {
     notification_enabled: boolean;
 }
 
+type FilterType = 'all' | 'custom' | 'month';
+
 export default function SchedulePage() {
     const [events, setEvents] = useState<ScheduleEvent[]>([]);
+    const [filteredEvents, setFilteredEvents] = useState<ScheduleEvent[]>([]);
     const [loading, setLoading] = useState(true);
     const [showModal, setShowModal] = useState(false);
+    const [filterType, setFilterType] = useState<FilterType>('all');
+    const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+    const [currentMonth, setCurrentMonth] = useState(new Date());
 
     // Form State
     const [newEvent, setNewEvent] = useState({
@@ -33,6 +39,10 @@ export default function SchedulePage() {
         fetchSchedules();
     }, []);
 
+    useEffect(() => {
+        filterEvents();
+    }, [events, filterType, selectedDate, currentMonth]);
+
     const fetchSchedules = async () => {
         try {
             const res = await api.get("/schedule/");
@@ -45,6 +55,27 @@ export default function SchedulePage() {
         }
     };
 
+    const filterEvents = () => {
+        let filtered = [...events];
+
+        if (filterType === 'custom' && selectedDate) {
+            // Filter by specific selected date
+            filtered = events.filter(event => {
+                const eventDate = new Date(event.court_date);
+                return eventDate.toDateString() === selectedDate.toDateString();
+            });
+        } else if (filterType === 'month') {
+            // Filter by current month view
+            filtered = events.filter(event => {
+                const eventDate = new Date(event.court_date);
+                return eventDate.getMonth() === currentMonth.getMonth() &&
+                    eventDate.getFullYear() === currentMonth.getFullYear();
+            });
+        }
+
+        setFilteredEvents(filtered);
+    };
+
     const checkUpcomingDeadlines = (events: ScheduleEvent[]) => {
         const now = new Date();
         const nextWeek = new Date();
@@ -52,7 +83,6 @@ export default function SchedulePage() {
 
         const upcoming = events.filter(e => {
             if (!e.notification_enabled) return false;
-            // Use reminder_date if available, else court_date
             const reminderTarget = new Date(e.reminder_date || e.court_date);
             return reminderTarget > now && reminderTarget <= nextWeek;
         });
@@ -96,13 +126,12 @@ export default function SchedulePage() {
         }
 
         try {
-            // Combine date and time
             const datetime = new Date(`${newEvent.court_date}T${newEvent.time}:00`);
 
             await api.post("/schedule/", {
                 case_name: newEvent.case_name,
                 court_date: datetime.toISOString(),
-                reminder_date: datetime.toISOString(), // Simplified: reminder same as event for now
+                reminder_date: datetime.toISOString(),
                 status: newEvent.status,
                 notification_enabled: newEvent.notification_enabled
             });
@@ -114,7 +143,6 @@ export default function SchedulePage() {
         } catch (error: any) {
             if (error.response?.status === 401) {
                 toast.error("Session expired. Please log in again.");
-                // api.ts interceptor will handle redirect
             } else {
                 toast.error("Failed to add event");
             }
@@ -133,6 +161,11 @@ export default function SchedulePage() {
         }
     };
 
+    const handleDateSelect = (date: Date) => {
+        setSelectedDate(date);
+        setFilterType('custom');
+    };
+
     const getStatusColor = (status: string) => {
         switch (status) {
             case 'In Progress': return 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400';
@@ -143,196 +176,388 @@ export default function SchedulePage() {
         }
     };
 
-    if (loading) return <div className="flex justify-center p-10"><Loader2 className="animate-spin text-blue-600" /></div>;
+    // Calendar Helper Functions
+    const getDaysInMonth = (date: Date) => {
+        const year = date.getFullYear();
+        const month = date.getMonth();
+        const firstDay = new Date(year, month, 1);
+        const lastDay = new Date(year, month + 1, 0);
+        const daysInMonth = lastDay.getDate();
+        const startingDayOfWeek = firstDay.getDay();
+
+        return { daysInMonth, startingDayOfWeek, year, month };
+    };
+
+    const hasEventsOnDate = (date: Date) => {
+        return events.some(event => {
+            const eventDate = new Date(event.court_date);
+            return eventDate.toDateString() === date.toDateString();
+        });
+    };
+
+    const renderCalendar = () => {
+        const { daysInMonth, startingDayOfWeek, year, month } = getDaysInMonth(currentMonth);
+        const days = [];
+        const today = new Date();
+
+        // Empty cells for days before the month starts
+        for (let i = 0; i < startingDayOfWeek; i++) {
+            days.push(<div key={`empty-${i}`} className="h-12"></div>);
+        }
+
+        // Days of the month
+        for (let day = 1; day <= daysInMonth; day++) {
+            const date = new Date(year, month, day);
+            const isToday = date.toDateString() === today.toDateString();
+            const isSelected = selectedDate && date.toDateString() === selectedDate.toDateString();
+            const hasEvents = hasEventsOnDate(date);
+
+            days.push(
+                <button
+                    key={day}
+                    onClick={() => handleDateSelect(date)}
+                    className={cn(
+                        "h-12 rounded-lg flex items-center justify-center text-base font-semibold transition-all relative",
+                        isSelected && "bg-blue-600 text-white shadow-lg",
+                        !isSelected && isToday && "bg-blue-100 text-blue-600 dark:bg-blue-900/30",
+                        !isSelected && !isToday && "hover:bg-slate-100 dark:hover:bg-slate-800",
+                    )}
+                >
+                    {day}
+                    {hasEvents && (
+                        <span className={cn(
+                            "absolute bottom-1.5 w-1.5 h-1.5 rounded-full",
+                            isSelected ? "bg-white" : "bg-blue-600 dark:bg-blue-400"
+                        )}></span>
+                    )}
+                </button>
+            );
+        }
+
+        return days;
+    };
+
+    const navigateMonth = (direction: 'prev' | 'next') => {
+        setCurrentMonth(prev => {
+            const newDate = new Date(prev);
+            if (direction === 'prev') {
+                newDate.setMonth(prev.getMonth() - 1);
+            } else {
+                newDate.setMonth(prev.getMonth() + 1);
+            }
+            return newDate;
+        });
+    };
+
+    if (loading) {
+        return (
+            <div className="h-screen flex items-center justify-center">
+                <Loader2 className="animate-spin text-blue-600" size={48} />
+            </div>
+        );
+    }
 
     return (
-        <div className="max-w-6xl mx-auto p-6">
-            <div className="flex justify-between items-center mb-8">
-                <div>
-                    <h1 className="text-3xl font-bold text-slate-800 dark:text-white">Court Schedule</h1>
-                    <p className="text-slate-500 mt-1">Manage hearings, deadlines, and reminders</p>
-                </div>
-                <button
-                    onClick={() => setShowModal(true)}
-                    className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl font-medium flex items-center gap-2 shadow-lg shadow-blue-600/20 transition hover:scale-105"
-                >
-                    <Plus size={18} /> Add Event
-                </button>
-            </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                {/* Calendar Widget (Simplified Visualization) */}
-                <div className="lg:col-span-2 bg-white dark:bg-slate-900 p-8 rounded-3xl shadow-sm border border-slate-200 dark:border-slate-800">
-                    <h2 className="text-xl font-bold mb-6 flex items-center gap-2">
-                        <CalendarIcon size={24} className="text-blue-500" /> Calendar Overview
-                    </h2>
-                    <div className="grid grid-cols-7 gap-4 text-center text-sm mb-4">
-                        {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(d => (
-                            <div key={d} className="font-semibold text-slate-400 uppercase tracking-wider text-xs">{d}</div>
-                        ))}
+        <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-950 dark:to-slate-900 p-8">
+            <div className="max-w-7xl mx-auto">
+                {/* Header */}
+                <div className="flex justify-between items-center mb-8">
+                    <div>
+                        <h1 className="text-4xl font-extrabold text-slate-900 dark:text-white mb-2">
+                            Schedule & Calendar
+                        </h1>
+                        <p className="text-slate-500 dark:text-slate-400">
+                            Manage court dates and important deadlines
+                        </p>
                     </div>
-                    {/* Simplified static month view for demo, highlighting event days */}
-                    <div className="grid grid-cols-7 gap-2">
-                        {Array.from({ length: 30 }, (_, i) => i + 1).map(day => {
-                            // Check if an event exists on this day (mock check for current month)
-                            const hasEvent = events.some(e => new Date(e.court_date).getDate() === day);
-                            return (
-                                <div
-                                    key={day}
-                                    className={`aspect-square flex items-center justify-center rounded-xl cursor-pointer transition relative
-                                        ${hasEvent
-                                            ? "bg-blue-600 text-white font-bold shadow-md shadow-blue-600/30"
-                                            : "hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300"
-                                        }`}
-                                >
-                                    {day}
+                    <button
+                        onClick={() => setShowModal(true)}
+                        className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-medium shadow-lg shadow-blue-600/30 transition-all hover:shadow-xl hover:shadow-blue-600/40"
+                    >
+                        <Plus size={20} />
+                        Add Event
+                    </button>
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
+                    {/* Calendar Section */}
+                    <div className="lg:col-span-2">
+                        <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 shadow-xl border border-slate-200 dark:border-slate-800">
+                            <div className="mb-6">
+                                <div className="flex items-center justify-between mb-4">
+                                    <h2 className="text-xl font-bold text-slate-900 dark:text-white">Calendar</h2>
+                                    <button
+                                        onClick={() => {
+                                            const today = new Date();
+                                            setCurrentMonth(today);
+                                            setSelectedDate(today);
+                                            setFilterType('custom');
+                                        }}
+                                        className="px-3 py-1.5 text-xs font-medium text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 dark:bg-blue-900/30 dark:text-blue-400 dark:hover:bg-blue-900/50 rounded-lg transition-colors"
+                                    >
+                                        Current Date
+                                    </button>
                                 </div>
-                            )
-                        })}
-                    </div>
-                </div>
+                                
+                                {/* Month and Year Selection with Navigation Arrows */}
+                                <div className="flex items-end gap-2 mb-4">
+                                    <div className="flex-1 min-w-[130px]">
+                                        <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">Month</label>
+                                        <select
+                                            value={currentMonth.getMonth()}
+                                            onChange={(e) => {
+                                                const newDate = new Date(currentMonth);
+                                                newDate.setMonth(parseInt(e.target.value));
+                                                setCurrentMonth(newDate);
+                                            }}
+                                            className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none cursor-pointer"
+                                        >
+                                            {['January', 'February', 'March', 'April', 'May', 'June', 
+                                              'July', 'August', 'September', 'October', 'November', 'December'].map((month, idx) => (
+                                                <option key={month} value={idx}>{month}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                    <div className="flex-1 min-w-[90px]">
+                                        <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">Year</label>
+                                        <select
+                                            value={currentMonth.getFullYear()}
+                                            onChange={(e) => {
+                                                const newDate = new Date(currentMonth);
+                                                newDate.setFullYear(parseInt(e.target.value));
+                                                setCurrentMonth(newDate);
+                                            }}
+                                            className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none cursor-pointer"
+                                        >
+                                            {Array.from({ length: 101 }, (_, i) => 2000 + i).map(year => (
+                                                <option key={year} value={year}>{year}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                    
+                                    {/* Navigation Arrows */}
+                                    <div className="flex gap-1">
+                                        <button
+                                            onClick={() => navigateMonth('prev')}
+                                            className="h-[42px] w-[42px] flex items-center justify-center hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition"
+                                            title="Previous Month"
+                                        >
+                                            <ChevronLeft size={20} />
+                                        </button>
+                                        <button
+                                            onClick={() => navigateMonth('next')}
+                                            className="h-[42px] w-[42px] flex items-center justify-center hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition"
+                                            title="Next Month"
+                                        >
+                                            <ChevronRight size={20} />
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
 
-                {/* Upcoming List */}
-                <div className="space-y-6">
-                    <h2 className="text-xl font-bold text-slate-800 dark:text-white">Upcoming Events</h2>
-                    <div className="space-y-4">
-                        {events.length === 0 && <p className="text-slate-500 italic">No upcoming events.</p>}
-                        {events.map((event) => {
-                            const date = new Date(event.court_date);
-                            return (
-                                <div key={event.id} className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 flex flex-col gap-3 relative overflow-hidden group shadow-sm hover:shadow-md transition">
-                                    <div className={cn("absolute left-0 top-0 w-1.5 h-full rounded-l-full",
-                                        event.status === 'Closed' ? "bg-slate-400" :
-                                            event.status === 'In Progress' ? "bg-blue-500" : "bg-amber-500"
-                                    )}></div>
-
-                                    <div className="flex justify-between items-start pl-2">
-                                        <h3 className="font-bold text-slate-800 dark:text-white ml-2 text-lg line-clamp-1">{event.case_name}</h3>
-                                        <div className="flex items-center gap-2">
-                                            <span className={`px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider ${getStatusColor(event.status)}`}>
-                                                {event.status}
-                                            </span>
-                                            {event.notification_enabled ?
-                                                <Bell size={16} className="text-amber-500" /> :
-                                                <BellOff size={16} className="text-slate-300" />
-                                            }
-                                            <button
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    handleDeleteEvent(event.id);
-                                                }}
-                                                className="ml-2 text-slate-400 hover:text-red-500 transition-colors p-1"
-                                                title="Delete Event"
-                                            >
-                                                <Trash2 size={16} />
-                                            </button>
+                            {/* Calendar Grid */}
+                            <div className="space-y-2">
+                                {/* Weekday Headers */}
+                                <div className="grid grid-cols-7 gap-1 mb-2">
+                                    {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
+                                        <div key={day} className="h-12 flex items-center justify-center text-sm font-bold text-slate-500 dark:text-slate-400">
+                                            {day}
                                         </div>
-                                    </div>
-
-                                    <div className="flex items-center gap-4 text-xs text-slate-500 ml-4 font-medium">
-                                        <span className="flex items-center gap-1.5"><CalendarIcon size={14} /> {date.toLocaleDateString()}</span>
-                                        <span className="flex items-center gap-1.5"><Clock size={14} /> {date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-                                    </div>
+                                    ))}
                                 </div>
-                            );
-                        })}
+
+                                {/* Calendar Days */}
+                                <div className="grid grid-cols-7 gap-1">
+                                    {renderCalendar()}
+                                </div>
+                            </div>
+
+                            {/* Legend */}
+                            <div className="mt-6 pt-6 border-t border-slate-200 dark:border-slate-800">
+                                <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400">
+                                    <div className="w-2 h-2 rounded-full bg-blue-600"></div>
+                                    <span>Has Events</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Events List */}
+                    <div className="lg:col-span-3">
+                        <div className="bg-white dark:bg-slate-900 rounded-3xl p-8 shadow-xl border border-slate-200 dark:border-slate-800">
+                            {/* Header with All Events Button */}
+                            <div className="flex items-center justify-between mb-6">
+                                <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
+                                    {filterType === 'all' ? 'All Events' : 
+                                     filterType === 'custom' && selectedDate ? 
+                                     selectedDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) :
+                                     filterType === 'month' ?
+                                     currentMonth.toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) : 'Events'}
+                                </h2>
+                                {(filterType !== 'all' || selectedDate) && (
+                                    <button
+                                        onClick={() => {
+                                            setFilterType('all');
+                                            setSelectedDate(null);
+                                        }}
+                                        className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors text-sm font-medium"
+                                    >
+                                        <CalendarIcon size={16} />
+                                        Show All Events
+                                    </button>
+                                )}
+                            </div>
+
+                            {/* Events Display */}
+                            <div className="space-y-4">
+                                {filteredEvents.length === 0 && (
+                                    <div className="text-center py-12">
+                                        <CalendarIcon size={48} className="mx-auto text-slate-300 dark:text-slate-700 mb-4" />
+                                        <p className="text-slate-500 dark:text-slate-400 italic">
+                                            {filterType === 'custom' && selectedDate
+                                                ? `No events scheduled for ${selectedDate.toLocaleDateString()}`
+                                                : filterType === 'month'
+                                                    ? 'No events this month'
+                                                    : 'No upcoming events'}
+                                        </p>
+                                    </div>
+                                )}
+                                {filteredEvents.map((event) => {
+                                    const date = new Date(event.court_date);
+                                    return (
+                                        <div key={event.id} className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 flex flex-col gap-3 relative overflow-hidden group shadow-sm hover:shadow-md transition">
+                                            <div className={cn("absolute left-0 top-0 w-1.5 h-full rounded-l-full",
+                                                event.status === 'Closed' ? "bg-slate-400" :
+                                                    event.status === 'In Progress' ? "bg-blue-500" : "bg-amber-500"
+                                            )}></div>
+
+                                            <div className="flex justify-between items-start pl-2">
+                                                <h3 className="font-bold text-slate-800 dark:text-white ml-2 text-lg line-clamp-1">{event.case_name}</h3>
+                                                <div className="flex items-center gap-2">
+                                                    <span className={`px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider ${getStatusColor(event.status)}`}>
+                                                        {event.status}
+                                                    </span>
+                                                    {event.notification_enabled ?
+                                                        <Bell size={16} className="text-amber-500" /> :
+                                                        <BellOff size={16} className="text-slate-300" />
+                                                    }
+                                                    <button
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            handleDeleteEvent(event.id);
+                                                        }}
+                                                        className="ml-2 text-slate-400 hover:text-red-500 transition-colors p-1"
+                                                        title="Delete Event"
+                                                    >
+                                                        <Trash2 size={16} />
+                                                    </button>
+                                                </div>
+                                            </div>
+
+                                            <div className="flex items-center gap-4 text-xs text-slate-500 ml-4 font-medium">
+                                                <span className="flex items-center gap-1.5"><CalendarIcon size={14} /> {date.toLocaleDateString()}</span>
+                                                <span className="flex items-center gap-1.5"><Clock size={14} /> {date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
 
             {/* Add Event Modal */}
-            {
-                showModal && (
-                    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
-                        <div className="bg-white dark:bg-slate-900 rounded-3xl w-full max-w-md p-8 shadow-2xl scale-100 transform transition-all">
-                            <div className="flex justify-between items-center mb-6">
-                                <h3 className="text-2xl font-bold">Add New Event</h3>
-                                <button onClick={() => setShowModal(false)} className="text-slate-400 hover:text-slate-600"><X size={24} /></button>
+            {showModal && (
+                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
+                    <div className="bg-white dark:bg-slate-900 rounded-3xl w-full max-w-md p-8 shadow-2xl scale-100 transform transition-all">
+                        <div className="flex justify-between items-center mb-6">
+                            <h3 className="text-2xl font-bold">Add New Event</h3>
+                            <button onClick={() => setShowModal(false)} className="text-slate-400 hover:text-slate-600"><X size={24} /></button>
+                        </div>
+
+                        <div className="space-y-4">
+                            <div>
+                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Event Title</label>
+                                <input
+                                    type="text"
+                                    value={newEvent.case_name}
+                                    onChange={e => setNewEvent({ ...newEvent, case_name: e.target.value })}
+                                    className="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-500 outline-none"
+                                    placeholder="e.g. Hearing vs State"
+                                />
                             </div>
 
-                            <div className="space-y-4">
+                            <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Event Title</label>
+                                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Date</label>
                                     <input
-                                        type="text"
-                                        value={newEvent.case_name}
-                                        onChange={e => setNewEvent({ ...newEvent, case_name: e.target.value })}
+                                        type="date"
+                                        value={newEvent.court_date}
+                                        onChange={e => setNewEvent({ ...newEvent, court_date: e.target.value })}
                                         className="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-500 outline-none"
-                                        placeholder="e.g. Hearing vs State"
                                     />
                                 </div>
-
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div>
-                                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Date</label>
-                                        <input
-                                            type="date"
-                                            value={newEvent.court_date}
-                                            onChange={e => setNewEvent({ ...newEvent, court_date: e.target.value })}
-                                            className="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-500 outline-none"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Time</label>
-                                        <input
-                                            type="time"
-                                            value={newEvent.time}
-                                            onChange={e => setNewEvent({ ...newEvent, time: e.target.value })}
-                                            className="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-500 outline-none"
-                                        />
-                                    </div>
-                                </div>
-
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div>
-                                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Status</label>
-                                        <select
-                                            value={newEvent.status}
-                                            onChange={e => setNewEvent({ ...newEvent, status: e.target.value })}
-                                            className="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-500 outline-none appearance-none"
-                                        >
-                                            <option value="Scheduled">Scheduled</option>
-                                            <option value="In Progress">In Progress</option>
-                                            <option value="Closed">Closed</option>
-                                        </select>
-                                    </div>
-                                    <div className="flex items-end pb-3">
-                                        <label className="flex items-center gap-3 cursor-pointer group">
-                                            <div className="relative">
-                                                <input
-                                                    type="checkbox"
-                                                    className="sr-only peer"
-                                                    checked={newEvent.notification_enabled}
-                                                    onChange={e => setNewEvent({ ...newEvent, notification_enabled: e.target.checked })}
-                                                />
-                                                <div className="w-10 h-6 bg-slate-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
-                                            </div>
-                                            <span className="text-sm font-medium text-gray-700 dark:text-gray-300 group-hover:text-blue-600 transition">
-                                                Notify Me
-                                            </span>
-                                        </label>
-                                    </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Time</label>
+                                    <input
+                                        type="time"
+                                        value={newEvent.time}
+                                        onChange={e => setNewEvent({ ...newEvent, time: e.target.value })}
+                                        className="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-500 outline-none"
+                                    />
                                 </div>
                             </div>
 
-                            <div className="flex gap-3 mt-8">
-                                <button
-                                    onClick={() => setShowModal(false)}
-                                    className="flex-1 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 py-3 rounded-xl font-medium transition"
-                                >
-                                    Cancel
-                                </button>
-                                <button
-                                    onClick={handleAddEvent}
-                                    className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-xl font-medium transition shadow-lg shadow-blue-600/20"
-                                >
-                                    Schedule Event
-                                </button>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Status</label>
+                                    <select
+                                        value={newEvent.status}
+                                        onChange={e => setNewEvent({ ...newEvent, status: e.target.value })}
+                                        className="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-500 outline-none appearance-none"
+                                    >
+                                        <option value="Scheduled">Scheduled</option>
+                                        <option value="In Progress">In Progress</option>
+                                        <option value="Closed">Closed</option>
+                                    </select>
+                                </div>
+                                <div className="flex items-end pb-3">
+                                    <label className="flex items-center gap-3 cursor-pointer group">
+                                        <div className="relative">
+                                            <input
+                                                type="checkbox"
+                                                className="sr-only peer"
+                                                checked={newEvent.notification_enabled}
+                                                onChange={e => setNewEvent({ ...newEvent, notification_enabled: e.target.checked })}
+                                            />
+                                            <div className="w-10 h-6 bg-slate-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
+                                        </div>
+                                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300 group-hover:text-blue-600 transition">
+                                            Notify Me
+                                        </span>
+                                    </label>
+                                </div>
                             </div>
                         </div>
+
+                        <div className="flex gap-3 mt-8">
+                            <button
+                                onClick={() => setShowModal(false)}
+                                className="flex-1 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 py-3 rounded-xl font-medium transition"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={handleAddEvent}
+                                className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-xl font-medium transition shadow-lg shadow-blue-600/20"
+                            >
+                                Schedule Event
+                            </button>
+                        </div>
                     </div>
-                )
-            }
-        </div >
+                </div>
+            )}
+        </div>
     );
 }
