@@ -5,10 +5,10 @@ import shutil
 import os
 from datetime import datetime
 
-from backend.database import get_db
-from backend.models import case as case_model
-from backend.models import user as user_model
-from backend.routers.auth import get_current_user
+from database import get_db
+from models import case as case_model
+from models import user as user_model
+from routers.auth import get_current_user
 
 router = APIRouter()
 
