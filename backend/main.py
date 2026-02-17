@@ -44,3 +44,11 @@ async def root():
 @app.get("/health")
 async def health_check():
     return {"status": "ok"}
+
+@app.get("/health")
+def health():
+    return {"status": "ok"}
+
+@app.head("/health")
+def health_head(response: Response):
+    response.status_code = 200
