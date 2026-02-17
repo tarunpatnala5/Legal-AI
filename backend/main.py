@@ -44,23 +44,3 @@ async def root():
 @app.get("/health")
 async def health_check():
     return {"status": "ok"}
-
-from fastapi import FastAPI, Response
-
-app = FastAPI()
-
-@app.get("/health")
-def health():
-    return {"status": "ok"}
-
-@app.head("/health")
-def health_head(response: Response):
-    response.status_code = 200
-
-@app.get("/")
-def root():
-    return {"status": "ok"}
-
-@app.head("/")
-def root_head(response: Response):
-    response.status_code = 200
