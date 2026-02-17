@@ -67,13 +67,13 @@ export default function SettingsPage() {
                     <div className="flex gap-2 bg-slate-100 dark:bg-slate-800 p-1 rounded-lg">
                         <button
                             onClick={() => setTheme("light")}
-                            className={`p-1 px-3 rounded shadow-sm text-xs font-medium transition ${theme === 'light' ? 'bg-white text-slate-800 dark:bg-slate-700 dark:text-white' : 'text-slate-500 hover:text-slate-700'}`}
+                            className={`p-1 px-3 rounded text-xs font-medium transition ${theme === 'light' ? 'bg-white dark:bg-white text-slate-800 shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'}`}
                         >
                             Light
                         </button>
                         <button
                             onClick={() => setTheme("dark")}
-                            className={`p-1 px-3 rounded shadow-sm text-xs font-medium transition ${theme === 'dark' ? 'bg-white text-slate-800 dark:bg-slate-700 dark:text-white' : 'text-slate-500 hover:text-slate-700'}`}
+                            className={`p-1 px-3 rounded text-xs font-medium transition ${theme === 'dark' ? 'bg-slate-700 text-white shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'}`}
                         >
                             Dark
                         </button>
