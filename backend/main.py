@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from fastapi import FastAPI, Response
 from fastapi.middleware.cors import CORSMiddleware
 from routers import auth, verdicts, chat, cases, schedule, judgments
 from config import settings
@@ -8,6 +9,7 @@ app = FastAPI(
     description="Backend for Legal AI Assistant with Supreme Court verdicts, Chatbot, and Case Management",
     version="1.0.0"
 )
+
 
 from database import engine, Base
 # Ensure all models are imported so tables are created
@@ -44,3 +46,12 @@ async def root():
 @app.get("/health")
 async def health_check():
     return {"status": "ok"}
+
+@app.head("/health")
+def health_head(response: Response):
+    response.status_code = 200
+
+
+@app.head("/")
+def root_head(response: Response):
+    response.status_code = 200
