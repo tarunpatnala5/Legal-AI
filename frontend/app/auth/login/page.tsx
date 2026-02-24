@@ -66,13 +66,13 @@ export default function LoginPage() {
 
                 <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
                     <div>
-                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Email or Username</label>
+                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Email</label>
                         <div className="relative">
                             <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
                             <input
                                 {...register("email")}
                                 className="w-full pl-10 pr-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition"
-                                placeholder="lawyer@example.com or admin"
+                                placeholder="lawyer@example.com"
                             />
                         </div>
                         {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email.message}</p>}

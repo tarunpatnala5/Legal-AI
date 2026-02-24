@@ -15,7 +15,6 @@ import { useAuth } from "@/lib/auth-context";
 
 const publicNavItems = [
     { name: "Home", href: "/", icon: Home },
-    { name: "Settings", href: "/settings", icon: Settings },
 ];
 
 const protectedNavItems = [
@@ -23,6 +22,7 @@ const protectedNavItems = [
     { name: "New Case", href: "/cases/new", icon: PlusCircle },
     { name: "Library", href: "/library", icon: Library },
     { name: "Schedule", href: "/schedule", icon: Calendar },
+    { name: "Settings", href: "/settings", icon: Settings },
 ];
 
 export default function SideNavbar() {
@@ -45,6 +45,11 @@ export default function SideNavbar() {
         ...(isLoggedIn ? protectedNavItems : []),
         ...(user?.is_admin ? [{ name: "Users", href: "/admin/users", icon: Users }] : []),
     ];
+
+    // Settings is always visible even when not logged in (bottom of list when not logged in)
+    const allNavItems = isLoggedIn
+        ? navItems
+        : [...publicNavItems, { name: "Settings", href: "/settings", icon: Settings }];
 
     const NavItem = ({ item }: { item: typeof navItems[0] }) => {
         const isActive = pathname === item.href;
@@ -136,7 +141,7 @@ export default function SideNavbar() {
 
                 {/* Nav Items */}
                 <div className="flex-1 py-6 flex flex-col gap-2 p-2 overflow-y-auto">
-                    {navItems.map((item) => <NavItem key={item.href} item={item} />)}
+                    {allNavItems.map((item) => <NavItem key={item.href} item={item} />)}
                 </div>
 
                 {/* Footer */}

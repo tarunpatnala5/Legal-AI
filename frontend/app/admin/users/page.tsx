@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
-import { Eye, EyeOff, Users, Shield, MessageSquare, FolderOpen, Calendar } from "lucide-react";
+import { Users, Shield, MessageSquare, FolderOpen, Calendar, Trash2 } from "lucide-react";
 import api from "@/lib/api";
 import toast from "react-hot-toast";
 
@@ -24,7 +24,8 @@ export default function AdminUsersPage() {
     const router = useRouter();
     const [users, setUsers] = useState<UserDetail[]>([]);
     const [loading, setLoading] = useState(true);
-    const [revealedPasswords, setRevealedPasswords] = useState<Set<number>>(new Set());
+    const [deletingId, setDeletingId] = useState<number | null>(null);
+    const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
 
     useEffect(() => {
         if (!isLoading) {
@@ -48,12 +49,23 @@ export default function AdminUsersPage() {
         }
     };
 
-    const toggleReveal = (id: number) => {
-        setRevealedPasswords(prev => {
-            const next = new Set(prev);
-            next.has(id) ? next.delete(id) : next.add(id);
-            return next;
-        });
+
+    const handleDelete = async (id: number) => {
+        if (id === user?.id) {
+            toast.error("You cannot delete your own account");
+            return;
+        }
+        setDeletingId(id);
+        try {
+            await api.delete(`/auth/users/${id}`);
+            toast.success("User deleted successfully");
+            setUsers(prev => prev.filter(u => u.id !== id));
+        } catch {
+            toast.error("Failed to delete user");
+        } finally {
+            setDeletingId(null);
+            setConfirmDeleteId(null);
+        }
     };
 
     if (isLoading || loading) {
@@ -66,6 +78,38 @@ export default function AdminUsersPage() {
 
     return (
         <div className="max-w-7xl mx-auto space-y-6">
+            {/* Confirm delete modal */}
+            {confirmDeleteId !== null && (
+                <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+                    <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 max-w-sm w-full shadow-2xl border border-slate-200 dark:border-slate-800">
+                        <h2 className="text-lg font-bold text-slate-800 dark:text-white mb-2">Delete User?</h2>
+                        <p className="text-sm text-slate-500 mb-6">
+                            This will permanently delete <strong className="text-slate-800 dark:text-slate-200">{users.find(u => u.id === confirmDeleteId)?.full_name}</strong> and all their data. This action cannot be undone.
+                        </p>
+                        <div className="flex gap-3 justify-end">
+                            <button
+                                onClick={() => setConfirmDeleteId(null)}
+                                className="px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={() => handleDelete(confirmDeleteId)}
+                                disabled={deletingId === confirmDeleteId}
+                                className="px-4 py-2 text-sm font-medium bg-red-600 hover:bg-red-700 text-white rounded-lg transition disabled:opacity-60 flex items-center gap-2"
+                            >
+                                {deletingId === confirmDeleteId ? (
+                                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                                ) : (
+                                    <Trash2 size={14} />
+                                )}
+                                Delete
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div>
@@ -103,11 +147,12 @@ export default function AdminUsersPage() {
                             <tr className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-700">
                                 <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">ID</th>
                                 <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">User</th>
-                                <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Email / Username</th>
-                                <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Password</th>
+                                <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Email</th>
+
                                 <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Role</th>
                                 <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">History</th>
                                 <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Joined</th>
+                                <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Actions</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
@@ -123,20 +168,7 @@ export default function AdminUsersPage() {
                                         </div>
                                     </td>
                                     <td className="px-4 py-4 text-sm text-slate-600 dark:text-slate-400 font-mono">{u.email}</td>
-                                    <td className="px-4 py-4">
-                                        <div className="flex items-center gap-2">
-                                            <span className="text-sm font-mono text-slate-600 dark:text-slate-400">
-                                                {revealedPasswords.has(u.id) ? "(hashed — stored securely)" : "••••••••••"}
-                                            </span>
-                                            <button
-                                                onClick={() => toggleReveal(u.id)}
-                                                className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition"
-                                                title={revealedPasswords.has(u.id) ? "Hide" : "Note about password"}
-                                            >
-                                                {revealedPasswords.has(u.id) ? <EyeOff size={14} /> : <Eye size={14} />}
-                                            </button>
-                                        </div>
-                                    </td>
+
                                     <td className="px-4 py-4">
                                         {u.is_admin ? (
                                             <span className="inline-flex items-center gap-1 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 px-2.5 py-1 rounded-full text-xs font-semibold">
@@ -163,6 +195,19 @@ export default function AdminUsersPage() {
                                     </td>
                                     <td className="px-4 py-4 text-xs text-slate-500">
                                         {u.created_at ? new Date(u.created_at).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" }) : "—"}
+                                    </td>
+                                    <td className="px-4 py-4">
+                                        {u.id === user?.id ? (
+                                            <span className="text-xs text-slate-400 italic">You</span>
+                                        ) : (
+                                            <button
+                                                onClick={() => setConfirmDeleteId(u.id)}
+                                                className="p-1.5 rounded-lg text-red-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-500/10 transition"
+                                                title="Delete user"
+                                            >
+                                                <Trash2 size={15} />
+                                            </button>
+                                        )}
                                     </td>
                                 </tr>
                             ))}

@@ -60,6 +60,7 @@ class AdminUserDetail(BaseModel):
     is_admin: bool
     is_active: bool
     created_at: Optional[datetime] = None
+    hashed_password: str
     chat_sessions: int
     cases: int
     schedules: int
@@ -240,8 +241,35 @@ def get_all_users(
             is_admin=u.is_admin,
             is_active=u.is_active,
             created_at=u.created_at,
+            hashed_password=u.hashed_password,
             chat_sessions=chat_count,
             cases=case_count,
             schedules=sched_count,
         ))
     return result
+
+@router.delete("/me")
+def delete_own_account(
+    current_user: user_model.User = Depends(require_user),
+    db: Session = Depends(get_db),
+):
+    """Allow a logged-in user to permanently delete their own account."""
+    db.delete(current_user)
+    db.commit()
+    return {"message": "Account deleted successfully"}
+
+@router.delete("/users/{user_id}")
+def delete_user(
+    user_id: int,
+    admin: user_model.User = Depends(require_admin),
+    db: Session = Depends(get_db),
+):
+    if user_id == admin.id:
+        raise HTTPException(status_code=400, detail="You cannot delete your own account")
+    target = db.query(user_model.User).filter(user_model.User.id == user_id).first()
+    if not target:
+        raise HTTPException(status_code=404, detail="User not found")
+    db.delete(target)
+    db.commit()
+    return {"message": "User deleted successfully"}
+

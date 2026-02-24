@@ -1,6 +1,6 @@
 "use client";
 
-import { Moon, Bell, User, LogOut, Mail, Lock, Pencil, X, Check, Loader2 } from "lucide-react";
+import { Moon, Bell, User, LogOut, Mail, Lock, Pencil, X, Check, Loader2, Trash2, AlertTriangle } from "lucide-react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTheme } from "@/lib/theme-context";
@@ -15,6 +15,9 @@ export default function SettingsPage() {
     const [notifications, setNotifications] = useState(true);
     const [editOpen, setEditOpen] = useState(false);
     const [saving, setSaving] = useState(false);
+    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+    const [deleteInput, setDeleteInput] = useState("");
+    const [deletingAccount, setDeletingAccount] = useState(false);
 
     const [form, setForm] = useState({
         full_name: user?.full_name || "",
@@ -27,6 +30,24 @@ export default function SettingsPage() {
     const handleLogout = () => {
         logout();
         router.push("/auth/login");
+    };
+
+    const handleDeleteAccount = async () => {
+        if (deleteInput !== "DELETE") {
+            toast.error("Type DELETE to confirm");
+            return;
+        }
+        setDeletingAccount(true);
+        try {
+            await api.delete("/auth/me");
+            toast.success("Account deleted");
+            logout();
+            router.push("/auth/login");
+        } catch (error: any) {
+            toast.error(error.response?.data?.detail || "Failed to delete account");
+        } finally {
+            setDeletingAccount(false);
+        }
     };
 
     const openEdit = () => {
@@ -200,6 +221,59 @@ export default function SettingsPage() {
                                 <p className="text-red-400 text-sm">Sign out of your account</p>
                             </div>
                         </div>
+                    </div>
+                )}
+
+                {/* Delete Account */}
+                {user && (
+                    <div className="p-6">
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-4">
+                                <div className="p-2 bg-red-100 dark:bg-red-900/20 text-red-700 rounded-lg"><Trash2 size={20} /></div>
+                                <div>
+                                    <h3 className="font-semibold text-red-700 dark:text-red-400">Delete Account</h3>
+                                    <p className="text-slate-500 text-sm">Permanently remove your account and all data</p>
+                                </div>
+                            </div>
+                            <button
+                                onClick={() => { setShowDeleteConfirm(!showDeleteConfirm); setDeleteInput(""); }}
+                                className="px-4 py-2 text-sm font-medium text-red-600 border border-red-200 dark:border-red-800 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition"
+                            >
+                                {showDeleteConfirm ? "Cancel" : "Delete"}
+                            </button>
+                        </div>
+
+                        {showDeleteConfirm && (
+                            <div className="mt-5 pt-5 border-t border-red-100 dark:border-red-900/30 space-y-4">
+                                <div className="flex items-start gap-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-4">
+                                    <AlertTriangle size={18} className="text-red-500 mt-0.5 shrink-0" />
+                                    <p className="text-sm text-red-700 dark:text-red-300">
+                                        This will <strong>permanently delete</strong> your account, all your cases, chat history, and schedules. This action <strong>cannot be undone</strong>.
+                                    </p>
+                                </div>
+                                <div>
+                                    <label className="text-xs font-medium text-slate-600 dark:text-slate-400 mb-1.5 block">
+                                        Type <span className="font-mono font-bold text-red-600">DELETE</span> to confirm
+                                    </label>
+                                    <input
+                                        value={deleteInput}
+                                        onChange={e => setDeleteInput(e.target.value)}
+                                        placeholder="DELETE"
+                                        className="w-full px-3 py-2.5 bg-slate-50 dark:bg-slate-800 border border-red-200 dark:border-red-800 rounded-lg text-sm outline-none focus:ring-2 focus:ring-red-500 transition font-mono"
+                                    />
+                                </div>
+                                <div className="flex justify-end">
+                                    <button
+                                        onClick={handleDeleteAccount}
+                                        disabled={deletingAccount || deleteInput !== "DELETE"}
+                                        className="flex items-center gap-2 px-5 py-2.5 bg-red-600 hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-semibold rounded-lg transition"
+                                    >
+                                        {deletingAccount ? <Loader2 size={15} className="animate-spin" /> : <Trash2 size={15} />}
+                                        Permanently Delete Account
+                                    </button>
+                                </div>
+                            </div>
+                        )}
                     </div>
                 )}
             </div>
