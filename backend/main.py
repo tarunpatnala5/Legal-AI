@@ -32,12 +32,12 @@ app.add_middleware(
 )
 
 # Include Routers
-app.include_router(auth.router, prefix="/api/auth", tags=["Authentication"])
-app.include_router(verdicts.router, prefix="/api/verdicts", tags=["Verdicts"])
-app.include_router(chat.router, prefix="/api/chat", tags=["AI Chatbot"])
-app.include_router(cases.router, prefix="/api/cases", tags=["Case Management"])
-app.include_router(schedule.router, prefix="/api/schedule", tags=["Court Schedule"])
-app.include_router(judgments.router, prefix="/api/judgments", tags=["Live Judgments"])
+app.include_router(auth.router, prefix="/auth", tags=["Authentication"])
+app.include_router(verdicts.router, prefix="/verdicts", tags=["Verdicts"])
+app.include_router(chat.router, prefix="/chat", tags=["AI Chatbot"])
+app.include_router(cases.router, prefix="/cases", tags=["Case Management"])
+app.include_router(schedule.router, prefix="/schedule", tags=["Court Schedule"])
+app.include_router(judgments.router, prefix="/judgments", tags=["Live Judgments"])
 
 @app.get("/")
 async def root():
