@@ -49,16 +49,17 @@ class ChatHistorySchema(BaseModel):
 # --- Endpoints ---
 
 @router.get("/sessions", response_model=List[SessionSchema])
-def get_sessions(db: Session = Depends(get_db)):
-    # In real app, filter by user_id
-    sessions = db.query(ChatSession).order_by(ChatSession.updated_at.desc()).all()
-    # Convert dates to string for simple JSON response if needed, 
-    # but Pydantic handles datetime -> ISO string automatically usually.
+def get_sessions(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    if not current_user:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    sessions = db.query(ChatSession).filter(ChatSession.user_id == current_user.id).order_by(ChatSession.updated_at.desc()).all()
     return sessions
 
 @router.post("/sessions", response_model=SessionSchema)
-def create_session(request: NewSessionRequest, db: Session = Depends(get_db)):
-    new_session = ChatSession(title=request.title)
+def create_session(request: NewSessionRequest, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    if not current_user:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    new_session = ChatSession(title=request.title, user_id=current_user.id)
     db.add(new_session)
     db.commit()
     db.refresh(new_session)

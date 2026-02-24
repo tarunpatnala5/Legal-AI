@@ -9,48 +9,42 @@ import * as z from "zod";
 import { Loader2, Eye, EyeOff, Lock, Mail, ShieldCheck } from "lucide-react";
 import toast from "react-hot-toast";
 import api from "@/lib/api";
+import { useAuth } from "@/lib/auth-context";
 
 const schema = z.object({
-    email: z.string().email("Invalid email address"),
-    password: z.string().min(8, "Password must be at least 8 characters"),
+    email: z.string().min(1, "Email or username required"),
+    password: z.string().min(1, "Password required"),
 });
 
 type FormData = z.infer<typeof schema>;
 
 export default function LoginPage() {
     const router = useRouter();
+    const { login } = useAuth();
     const [loading, setLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
 
-    const {
-        register,
-        handleSubmit,
-        formState: { errors },
-    } = useForm<FormData>({
+    const { register, handleSubmit, formState: { errors } } = useForm<FormData>({
         resolver: zodResolver(schema),
     });
 
     const onSubmit = async (data: FormData) => {
         setLoading(true);
         try {
-            // Using URLSearchParams for x-www-form-urlencoded
             const params = new URLSearchParams();
-            params.append('username', data.email);
-            params.append('password', data.password);
+            params.append("username", data.email);
+            params.append("password", data.password);
 
             const res = await api.post("/auth/login", params, {
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded'
-                }
+                headers: { "Content-Type": "application/x-www-form-urlencoded" },
             });
 
-            localStorage.setItem("token", res.data.access_token);
+            await login(res.data.access_token);
             toast.success("Login successful");
             router.push("/");
         } catch (error: any) {
-            console.error(error);
             if (error.response?.status === 401) {
-                toast.error("Invalid email or password");
+                toast.error("Invalid credentials");
             } else {
                 toast.error("Login failed. Please try again.");
             }
@@ -72,19 +66,16 @@ export default function LoginPage() {
 
                 <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
                     <div>
-                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Email Address</label>
+                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Email or Username</label>
                         <div className="relative">
                             <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
                             <input
-                                type="email"
                                 {...register("email")}
                                 className="w-full pl-10 pr-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition"
-                                placeholder="lawyer@example.com"
+                                placeholder="lawyer@example.com or admin"
                             />
                         </div>
-                        {errors.email && (
-                            <p className="text-red-500 text-xs mt-1">{errors.email.message}</p>
-                        )}
+                        {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email.message}</p>}
                     </div>
 
                     <div>
@@ -97,19 +88,13 @@ export default function LoginPage() {
                                 className="w-full pl-10 pr-10 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition"
                                 placeholder="••••••••"
                             />
-                            <button
-                                type="button"
-                                onClick={() => setShowPassword(!showPassword)}
-                                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
-                            >
+                            <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
                                 {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                             </button>
                         </div>
-                        {errors.password && (
-                            <p className="text-red-500 text-xs mt-1">{errors.password.message}</p>
-                        )}
+                        {errors.password && <p className="text-red-500 text-xs mt-1">{errors.password.message}</p>}
                         <div className="flex justify-end mt-1">
-                            <Link href="#" className="text-xs text-blue-600 hover:underline">Forgot password?</Link>
+                            <Link href="/auth/forgot-password" className="text-xs text-blue-600 hover:underline">Forgot password?</Link>
                         </div>
                     </div>
 
@@ -123,10 +108,8 @@ export default function LoginPage() {
                 </form>
 
                 <p className="text-center text-sm text-slate-500 mt-6">
-                    Don't have an account?{" "}
-                    <Link href="/auth/register" className="text-blue-600 font-semibold hover:underline">
-                        Register for free
-                    </Link>
+                    Don&apos;t have an account?{" "}
+                    <Link href="/auth/register" className="text-blue-600 font-semibold hover:underline">Register for free</Link>
                 </p>
             </div>
         </div>

@@ -10,22 +10,21 @@ app = FastAPI(
     version="1.0.0"
 )
 
-
-from database import engine, Base
+from database import engine, Base, SessionLocal
 # Ensure all models are imported so tables are created
-from models import user as user_model, schedule as schedule_model, case as case_model 
+from models import user as user_model, schedule as schedule_model, case as case_model
+from models import chat as chat_model
 Base.metadata.create_all(bind=engine)
 
-# CORS Configuration
-origins = [
-    "https://legal-ai-whhe.onrender.com/api",
-    # Add production domains here
-    "*"  # For development convenience
-]
+# Seed admin account on startup
+from routers.auth import seed_admin
+with SessionLocal() as db:
+    seed_admin(db)
 
+# CORS Configuration
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -50,7 +49,6 @@ async def health_check():
 @app.head("/health")
 def health_head(response: Response):
     response.status_code = 200
-
 
 @app.head("/")
 def root_head(response: Response):
