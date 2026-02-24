@@ -1,43 +1,36 @@
-
+"""
+One-time migration: adds new columns to the users table for the auth overhaul.
+Safe to run multiple times (checks if columns exist before adding).
+"""
 import sqlite3
+import os
 
-def migrate_db():
-    try:
-        conn = sqlite3.connect('legal_ai.db')
-        cursor = conn.cursor()
-        
-        # Check if notification_enabled column exists
-        cursor.execute("PRAGMA table_info(schedules)")
-        columns = [column[1] for column in cursor.fetchall()]
-        
-        if 'notification_enabled' not in columns:
-            print("Adding notification_enabled column...")
-            cursor.execute("ALTER TABLE schedules ADD COLUMN notification_enabled BOOLEAN DEFAULT 1")
-            conn.commit()
-            print("Schedule Migration successful.")
-        else:
-            print("Column notification_enabled already exists in schedules.")
+DB_PATH = os.path.join(os.path.dirname(__file__), "..", "legal_ai.db")
+DB_PATH = os.path.abspath(DB_PATH)
 
-        # Check users table
-        cursor.execute("PRAGMA table_info(users)")
-        user_columns = [column[1] for column in cursor.fetchall()]
+print(f"Migrating: {DB_PATH}")
 
-        if 'full_name' not in user_columns:
-            print("Adding full_name column to users...")
-            cursor.execute("ALTER TABLE users ADD COLUMN full_name VARCHAR")
-            conn.commit()
-            print("User (full_name) Migration successful.")
-        
-        if 'is_active' not in user_columns:
-            print("Adding is_active column to users...")
-            cursor.execute("ALTER TABLE users ADD COLUMN is_active BOOLEAN DEFAULT 1")
-            conn.commit()
-            print("User (is_active) Migration successful.")
-            
-    except Exception as e:
-        print(f"Migration failed: {e}")
-    finally:
-        conn.close()
+conn = sqlite3.connect(DB_PATH)
+cursor = conn.cursor()
 
-if __name__ == "__main__":
-    migrate_db()
+# Get existing columns
+cursor.execute("PRAGMA table_info(users)")
+existing_cols = {row[1] for row in cursor.fetchall()}
+print(f"Existing columns: {existing_cols}")
+
+migrations = [
+    ("is_admin",            "ALTER TABLE users ADD COLUMN is_admin BOOLEAN NOT NULL DEFAULT 0"),
+    ("reset_token",         "ALTER TABLE users ADD COLUMN reset_token VARCHAR(255)"),
+    ("reset_token_expiry",  "ALTER TABLE users ADD COLUMN reset_token_expiry DATETIME"),
+]
+
+for col, sql in migrations:
+    if col not in existing_cols:
+        cursor.execute(sql)
+        print(f"  ✅ Added column: {col}")
+    else:
+        print(f"  ⏭  Column already exists: {col}")
+
+conn.commit()
+conn.close()
+print("Migration complete!")
