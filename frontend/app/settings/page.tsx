@@ -147,7 +147,7 @@ export default function SettingsPage() {
                                 </div>
                             </div>
                             <div className="border-t border-slate-100 dark:border-slate-800 pt-4">
-                                <p className="text-xs font-medium text-slate-500 mb-3">Change Password (optional)</p>
+                                <p className="text-xs font-medium text-slate-500 mb-3">Change Password</p>
                                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                                     {[
                                         { label: "Current Password", key: "current_password" },
