@@ -224,8 +224,8 @@ export default function SettingsPage() {
                     </div>
                 )}
 
-                {/* Delete Account */}
-                {user && (
+                {/* Delete Account - not shown for admin */}
+                {user && !user.is_admin && (
                     <div className="p-6">
                         <div className="flex items-center justify-between">
                             <div className="flex items-center gap-4">

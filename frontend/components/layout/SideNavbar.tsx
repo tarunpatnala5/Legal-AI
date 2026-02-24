@@ -7,22 +7,24 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
     Home, MessageSquare, PlusCircle, Library, Calendar,
     Settings, ChevronLeft, ChevronRight, Scale, LogOut,
-    Menu, X, LogIn, Users
+    Menu, X, LogIn, Users, Lock
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth-context";
 
+// Always-visible nav items
 const publicNavItems = [
-    { name: "Home", href: "/", icon: Home },
+    { name: "Home", href: "/", icon: Home, protected: false },
 ];
 
+// These show always but redirect to login if not logged in
 const protectedNavItems = [
-    { name: "Chat Assistant", href: "/chat", icon: MessageSquare },
-    { name: "New Case", href: "/cases/new", icon: PlusCircle },
-    { name: "Library", href: "/library", icon: Library },
-    { name: "Schedule", href: "/schedule", icon: Calendar },
-    { name: "Settings", href: "/settings", icon: Settings },
+    { name: "Chat Assistant", href: "/chat", icon: MessageSquare, protected: true },
+    { name: "New Case", href: "/cases/new", icon: PlusCircle, protected: true },
+    { name: "Library", href: "/library", icon: Library, protected: true },
+    { name: "Schedule", href: "/schedule", icon: Calendar, protected: true },
+    { name: "Settings", href: "/settings", icon: Settings, protected: false },
 ];
 
 export default function SideNavbar() {
@@ -40,29 +42,36 @@ export default function SideNavbar() {
 
     const closeMobileMenu = () => setIsMobileMenuOpen(false);
 
-    const navItems = [
+    const allNavItems = [
         ...publicNavItems,
-        ...(isLoggedIn ? protectedNavItems : []),
-        ...(user?.is_admin ? [{ name: "Users", href: "/admin/users", icon: Users }] : []),
+        ...protectedNavItems,
+        ...(user?.is_admin ? [{ name: "Users", href: "/admin/users", icon: Users, protected: true }] : []),
     ];
 
-    // Settings is always visible even when not logged in (bottom of list when not logged in)
-    const allNavItems = isLoggedIn
-        ? navItems
-        : [...publicNavItems, { name: "Settings", href: "/settings", icon: Settings }];
-
-    const NavItem = ({ item }: { item: typeof navItems[0] }) => {
+    const NavItem = ({ item }: { item: typeof allNavItems[0] }) => {
         const isActive = pathname === item.href;
+        const isLocked = item.protected && !isLoggedIn;
+
+        const handleClick = (e: React.MouseEvent) => {
+            closeMobileMenu();
+            if (isLocked) {
+                e.preventDefault();
+                toast.error("Please login to access this page");
+                router.push("/auth/login");
+            }
+        };
+
         return (
             <Link
-                key={item.href}
                 href={item.href}
-                onClick={closeMobileMenu}
+                onClick={handleClick}
                 className={cn(
                     "flex items-center gap-4 px-3 py-3 rounded-xl transition-all duration-200 group relative",
                     isActive
                         ? "bg-blue-50 dark:bg-blue-600/20 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-600/30"
-                        : "hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                        : isLocked
+                            ? "text-slate-400 dark:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-500 cursor-pointer"
+                            : "hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
                 )}
             >
                 <item.icon className={cn("w-6 h-6 min-w-[24px]", isActive && "text-blue-600 dark:text-blue-400")} />
@@ -70,14 +79,18 @@ export default function SideNavbar() {
                     <motion.span
                         initial={{ opacity: 0, x: -10 }}
                         animate={{ opacity: 1, x: 0 }}
-                        className="whitespace-nowrap font-medium"
+                        className="whitespace-nowrap font-medium flex-1"
                     >
                         {item.name}
                     </motion.span>
                 )}
+                {/* Lock icon for protected items when not logged in */}
+                {isLocked && !isCollapsed && (
+                    <Lock size={12} className="text-slate-300 dark:text-slate-600 shrink-0" />
+                )}
                 {isCollapsed && (
                     <div className="absolute left-full ml-2 px-2 py-1 bg-white dark:bg-slate-800 text-slate-800 dark:text-white text-sm rounded opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-50 shadow-lg border border-slate-200 dark:border-slate-700">
-                        {item.name}
+                        {item.name}{isLocked ? " (Login required)" : ""}
                     </div>
                 )}
             </Link>
