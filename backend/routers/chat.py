@@ -87,17 +87,27 @@ def delete_session(session_id: int, db: Session = Depends(get_db)):
     return {"status": "success", "message": "Session deleted"}
 
 @router.post("/message", response_model=MessageResponse)
-def send_message(request: MessageRequest, db: Session = Depends(get_db)):
+def send_message(
+    request: MessageRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    if not current_user:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+
     session_id = request.session_id
-    
-    # 1. Create session if not exists
+
+    # 1. Create session if not exists — always link to the current user
     if not session_id:
-        new_session = ChatSession(title=request.message[:30] + "...")
+        new_session = ChatSession(
+            title=request.message[:40] + ("..." if len(request.message) > 40 else ""),
+            user_id=current_user.id,
+        )
         db.add(new_session)
         db.commit()
         db.refresh(new_session)
         session_id = new_session.id
-    
+
     session = db.query(ChatSession).filter(ChatSession.id == session_id).first()
     if not session:
         raise HTTPException(status_code=404, detail="Session not found")
@@ -107,24 +117,19 @@ def send_message(request: MessageRequest, db: Session = Depends(get_db)):
     db.add(user_msg)
     db.commit()
 
-    # 3. Build Context for AI
-    # Fetch last 10 messages for context
-    # Fetch last 20 messages for context to avoid token limits with large files
+    # 3. Build Context for AI — last 20 messages in chronological order
     history = db.query(ChatMessage).filter(ChatMessage.session_id == session_id).order_by(ChatMessage.created_at.desc()).limit(20).all()
-    history = history[::-1] # Reverse back to chronological order
-    
+    history = history[::-1]
+
     messages_payload = [{"role": m.role, "content": m.content} for m in history]
-    
+
     # 4. Get AI Response
     ai_response_text = ai_service.get_chat_response(messages_payload)
 
-    # 5. Save AI Response
+    # 5. Save AI Response and update session timestamp
     ai_msg = ChatMessage(session_id=session_id, role="assistant", content=ai_response_text)
     db.add(ai_msg)
-    
-    # Update session timestamp
     session.updated_at = func.now()
-    
     db.commit()
 
     return {"response": ai_response_text, "session_id": session_id}
