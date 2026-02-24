@@ -1,3 +1,6 @@
+from dotenv import load_dotenv
+load_dotenv()  # Load .env file from backend directory
+
 from fastapi import FastAPI
 from fastapi import FastAPI, Response
 from fastapi.middleware.cors import CORSMiddleware
