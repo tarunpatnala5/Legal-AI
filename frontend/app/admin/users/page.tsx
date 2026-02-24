@@ -81,7 +81,7 @@ export default function AdminUsersPage() {
             {/* Confirm delete modal */}
             {confirmDeleteId !== null && (
                 <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-                    <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 max-w-sm w-full shadow-2xl border border-slate-200 dark:border-slate-800">
+                    <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 max-w-sm w-full shadow-2xl border border-slate-200 dark:border-slate-800">
                         <h2 className="text-lg font-bold text-slate-800 dark:text-white mb-2">Delete User?</h2>
                         <p className="text-sm text-slate-500 mb-6">
                             This will permanently delete <strong className="text-slate-800 dark:text-slate-200">{users.find(u => u.id === confirmDeleteId)?.full_name}</strong> and all their data. This action cannot be undone.
@@ -132,7 +132,7 @@ export default function AdminUsersPage() {
                     { label: "Total Chats", value: users.reduce((a, u) => a + u.chat_sessions, 0), color: "green" },
                     { label: "Total Cases", value: users.reduce((a, u) => a + u.cases, 0), color: "amber" },
                 ].map(stat => (
-                    <div key={stat.label} className="bg-white dark:bg-slate-900 rounded-xl p-4 border border-slate-200 dark:border-slate-800 shadow-sm">
+                    <div key={stat.label} className="bg-white dark:bg-slate-800 rounded-xl p-4 border border-slate-200 dark:border-slate-800 shadow-sm">
                         <div className="text-2xl font-bold text-slate-800 dark:text-white">{stat.value}</div>
                         <div className="text-xs text-slate-500 mt-1">{stat.label}</div>
                     </div>
@@ -140,7 +140,7 @@ export default function AdminUsersPage() {
             </div>
 
             {/* Users Table */}
-            <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
+            <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
                 <div className="overflow-x-auto">
                     <table className="w-full">
                         <thead>

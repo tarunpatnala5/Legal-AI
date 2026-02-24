@@ -71,7 +71,7 @@ export default function TopNavbar() {
             {/* Left */}
             <div className="flex items-center gap-2 flex-1">
                 <div className="w-10 lg:hidden" />
-                <div className="hidden sm:flex items-center bg-slate-100 dark:bg-slate-900 px-3 sm:px-4 py-2 rounded-lg w-full max-w-md border border-transparent focus-within:border-blue-500 transition-all">
+                <div className="hidden sm:flex items-center bg-slate-100 dark:bg-slate-800 px-3 sm:px-4 py-2 rounded-lg w-full max-w-md border border-transparent focus-within:border-blue-500 transition-all">
                     <Search className="w-4 h-4 sm:w-5 sm:h-5 text-slate-400 mr-2 sm:mr-3 shrink-0" />
                     <input
                         type="text"
@@ -104,7 +104,7 @@ export default function TopNavbar() {
                                 <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full border-2 border-white dark:border-slate-950 animate-pulse" />
                             )}
                         </button>
-                        <div className="absolute right-0 top-full mt-2 w-72 sm:w-80 bg-white dark:bg-slate-900 rounded-xl shadow-xl border border-slate-200 dark:border-slate-800 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50">
+                        <div className="absolute right-0 top-full mt-2 w-72 sm:w-80 bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-slate-200 dark:border-slate-700 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50">
                             <div className="p-3 sm:p-4 border-b border-slate-200 dark:border-slate-800">
                                 <h3 className="font-semibold text-sm text-slate-800 dark:text-white">Upcoming Events (24h)</h3>
                             </div>
@@ -131,7 +131,7 @@ export default function TopNavbar() {
                 {isLoggedIn ? (
                     <button
                         onClick={() => router.push("/settings")}
-                        className="hidden sm:flex items-center gap-2 sm:gap-3 hover:bg-slate-100 dark:hover:bg-slate-900 pl-1 sm:pl-2 pr-2 sm:pr-4 py-1 sm:py-1.5 rounded-full transition border border-slate-200 dark:border-slate-800"
+                        className="hidden sm:flex items-center gap-2 sm:gap-3 hover:bg-slate-100 dark:hover:bg-slate-800 pl-1 sm:pl-2 pr-2 sm:pr-4 py-1 sm:py-1.5 rounded-full transition border border-slate-200 dark:border-slate-700"
                     >
                         <div className="w-7 h-7 sm:w-8 sm:h-8 bg-blue-600 rounded-full flex items-center justify-center text-white font-medium text-xs sm:text-sm">
                             {initials}

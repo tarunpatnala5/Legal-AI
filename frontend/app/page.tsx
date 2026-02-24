@@ -70,7 +70,7 @@ export default function Home() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800">
+        <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800">
           <div className="flex items-center gap-3 text-blue-500 mb-2">
             <BookOpen size={24} />
             <span className="font-semibold">Live Judgments</span>
@@ -79,7 +79,7 @@ export default function Home() {
           <p className="text-xs text-slate-500 mt-1">Updates this week</p>
         </div>
 
-        <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800">
+        <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800">
           <div className="flex items-center gap-3 text-purple-500 mb-2">
             <Calendar size={24} />
             <span className="font-semibold">Upcoming Hearings</span>
@@ -88,7 +88,7 @@ export default function Home() {
           <p className="text-xs text-slate-500 mt-1">Scheduled for next 7 days</p>
         </div>
 
-        <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800">
+        <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800">
           <div className="flex items-center gap-3 text-amber-500 mb-2">
             <AlertCircle size={24} />
             <span className="font-semibold">Pending Drafts</span>
@@ -128,7 +128,7 @@ export default function Home() {
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.1 }}
-                  className="group bg-white dark:bg-slate-900 p-5 rounded-xl border border-slate-200 dark:border-slate-800 hover:border-blue-500/50 hover:shadow-md transition-all cursor-pointer relative overflow-hidden h-full mb-4"
+                  className="group bg-white dark:bg-slate-800 p-5 rounded-xl border border-slate-200 dark:border-slate-800 hover:border-blue-500/50 hover:shadow-md transition-all cursor-pointer relative overflow-hidden h-full mb-4"
                 >
                   <div className="absolute top-0 left-0 w-1 h-full bg-blue-500 opacity-0 group-hover:opacity-100 transition-opacity"></div>
                   <div className="pl-2">

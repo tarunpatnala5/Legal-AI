@@ -258,7 +258,7 @@ export default function SchedulePage() {
     }
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-950 dark:to-slate-900 p-3 sm:p-6 lg:p-8">
+        <div className="min-h-screen p-3 sm:p-6 lg:p-8">
             <div className="max-w-7xl mx-auto">
                 {/* Header */}
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4 mb-4 sm:mb-6 lg:mb-8">
@@ -282,7 +282,7 @@ export default function SchedulePage() {
                 <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 sm:gap-6 lg:gap-8">
                     {/* Calendar Section */}
                     <div className="lg:col-span-2">
-                        <div className="bg-white dark:bg-slate-900 rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-xl border border-slate-200 dark:border-slate-800">
+                        <div className="bg-white dark:bg-slate-800 rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-xl border border-slate-200 dark:border-slate-800">
                             <div className="mb-4 sm:mb-6">
                                 <div className="flex items-center justify-between mb-3 sm:mb-4">
                                     <h2 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white">Calendar</h2>
@@ -298,7 +298,7 @@ export default function SchedulePage() {
                                         Current Date
                                     </button>
                                 </div>
-                                
+
                                 {/* Month and Year Selection with Navigation Arrows */}
                                 <div className="flex items-end gap-1 sm:gap-2 mb-3 sm:mb-4">
                                     <div className="flex-1 min-w-[100px] sm:min-w-[130px]">
@@ -312,10 +312,10 @@ export default function SchedulePage() {
                                             }}
                                             className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-2 sm:px-3 py-2 sm:py-2.5 text-xs sm:text-sm focus:ring-2 focus:ring-blue-500 outline-none cursor-pointer"
                                         >
-                                            {['January', 'February', 'March', 'April', 'May', 'June', 
-                                              'July', 'August', 'September', 'October', 'November', 'December'].map((month, idx) => (
-                                                <option key={month} value={idx}>{month}</option>
-                                            ))}
+                                            {['January', 'February', 'March', 'April', 'May', 'June',
+                                                'July', 'August', 'September', 'October', 'November', 'December'].map((month, idx) => (
+                                                    <option key={month} value={idx}>{month}</option>
+                                                ))}
                                         </select>
                                     </div>
                                     <div className="flex-1 min-w-[70px] sm:min-w-[90px]">
@@ -334,7 +334,7 @@ export default function SchedulePage() {
                                             ))}
                                         </select>
                                     </div>
-                                    
+
                                     {/* Navigation Arrows */}
                                     <div className="flex gap-0.5 sm:gap-1">
                                         <button
@@ -384,15 +384,15 @@ export default function SchedulePage() {
 
                     {/* Events List */}
                     <div className="lg:col-span-3">
-                        <div className="bg-white dark:bg-slate-900 rounded-2xl sm:rounded-3xl p-4 sm:p-6 lg:p-8 shadow-xl border border-slate-200 dark:border-slate-800">
+                        <div className="bg-white dark:bg-slate-800 rounded-2xl sm:rounded-3xl p-4 sm:p-6 lg:p-8 shadow-xl border border-slate-200 dark:border-slate-800">
                             {/* Header with All Events Button */}
                             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4 mb-4 sm:mb-6">
                                 <h2 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white">
-                                    {filterType === 'all' ? 'All Events' : 
-                                     filterType === 'custom' && selectedDate ? 
-                                     selectedDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) :
-                                     filterType === 'month' ?
-                                     currentMonth.toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) : 'Events'}
+                                    {filterType === 'all' ? 'All Events' :
+                                        filterType === 'custom' && selectedDate ?
+                                            selectedDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) :
+                                            filterType === 'month' ?
+                                                currentMonth.toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) : 'Events'}
                                 </h2>
                                 {(filterType !== 'all' || selectedDate) && (
                                     <button
@@ -425,7 +425,7 @@ export default function SchedulePage() {
                                 {filteredEvents.map((event) => {
                                     const date = new Date(event.court_date);
                                     return (
-                                        <div key={event.id} className="bg-white dark:bg-slate-900 p-3 sm:p-4 lg:p-5 rounded-xl sm:rounded-2xl border border-slate-200 dark:border-slate-800 flex flex-col gap-2 sm:gap-3 relative overflow-hidden group shadow-sm hover:shadow-md transition">
+                                        <div key={event.id} className="bg-white dark:bg-slate-800 p-3 sm:p-4 lg:p-5 rounded-xl sm:rounded-2xl border border-slate-200 dark:border-slate-800 flex flex-col gap-2 sm:gap-3 relative overflow-hidden group shadow-sm hover:shadow-md transition">
                                             <div className={cn("absolute left-0 top-0 w-1 sm:w-1.5 h-full rounded-l-full",
                                                 event.status === 'Closed' ? "bg-slate-400" :
                                                     event.status === 'In Progress' ? "bg-blue-500" : "bg-amber-500"
@@ -470,7 +470,7 @@ export default function SchedulePage() {
             {/* Add Event Modal */}
             {showModal && (
                 <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-3 sm:p-4 animate-in fade-in duration-200">
-                    <div className="bg-white dark:bg-slate-900 rounded-2xl sm:rounded-3xl w-full max-w-md p-6 sm:p-8 shadow-2xl scale-100 transform transition-all max-h-[90vh] overflow-y-auto">
+                    <div className="bg-white dark:bg-slate-800 rounded-2xl sm:rounded-3xl w-full max-w-md p-6 sm:p-8 shadow-2xl scale-100 transform transition-all max-h-[90vh] overflow-y-auto">
                         <div className="flex justify-between items-center mb-4 sm:mb-6">
                             <h3 className="text-xl sm:text-2xl font-bold">Add New Event</h3>
                             <button onClick={() => setShowModal(false)} className="text-slate-400 hover:text-slate-600">

@@ -236,7 +236,7 @@ export default function ChatPage() {
 
     /* Sessions sidebar - drawer on mobile, column on desktop */
     const sessionsPanel = (
-        <div className="flex flex-col h-full bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800">
+        <div className="flex flex-col h-full bg-white dark:bg-slate-800 border-r border-slate-200 dark:border-slate-800">
             <div className="p-3 sm:p-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between shrink-0">
                 <span className="font-semibold text-slate-800 dark:text-white lg:block hidden">Conversations</span>
                 <button
@@ -306,7 +306,7 @@ export default function ChatPage() {
                             animate={{ x: 0 }}
                             exit={{ x: "-100%" }}
                             transition={{ type: "tween", duration: 0.2 }}
-                            className="fixed inset-y-0 left-0 w-[min(280px,85vw)] z-50 lg:hidden flex flex-col bg-white dark:bg-slate-900 shadow-xl"
+                            className="fixed inset-y-0 left-0 w-[min(280px,85vw)] z-50 lg:hidden flex flex-col bg-white dark:bg-slate-800 shadow-xl"
                         >
                             {sessionsPanel}
                         </motion.div>
@@ -315,12 +315,12 @@ export default function ChatPage() {
             </AnimatePresence>
 
             {/* Sidebar - hidden on mobile (shown in drawer above) */}
-            <div className="hidden lg:flex w-64 shrink-0 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden flex-col bg-white dark:bg-slate-900">
+            <div className="hidden lg:flex w-64 shrink-0 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden flex-col bg-white dark:bg-slate-800">
                 {sessionsPanel}
             </div>
 
             {/* Main Chat Area */}
-            <div className="flex-1 min-w-0 flex flex-col bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden relative">
+            <div className="flex-1 min-w-0 flex flex-col bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden relative">
                 {/* Mobile: header with menu to open sessions */}
                 <div className="lg:hidden flex items-center gap-2 p-3 border-b border-slate-200 dark:border-slate-800 shrink-0">
                     <button
@@ -385,7 +385,7 @@ export default function ChatPage() {
                 </div>
 
                 {/* Input Area - sticky, safe area friendly */}
-                <div className="p-3 sm:p-4 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 pb-[env(safe-area-inset-bottom,0)] shrink-0">
+                <div className="p-3 sm:p-4 bg-white dark:bg-slate-800 border-t border-slate-200 dark:border-slate-800 pb-[env(safe-area-inset-bottom,0)] shrink-0">
                     <div className="flex gap-2 sm:gap-3 max-w-4xl mx-auto items-end">
                         <input
                             type="file"

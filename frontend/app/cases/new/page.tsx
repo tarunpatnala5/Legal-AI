@@ -49,7 +49,7 @@ export default function NewCasePage() {
             <h1 className="text-2xl font-bold mb-2 text-slate-800 dark:text-white">Upload New Case</h1>
             <p className="text-slate-500 dark:text-slate-400 mb-8">Upload case documents (PDF) for AI analysis and translation.</p>
 
-            <div className="bg-white dark:bg-slate-900 p-8 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 space-y-6">
+            <div className="bg-white dark:bg-slate-800 p-8 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 space-y-6">
 
                 {/* File Drop Zone */}
                 <div className="border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-xl p-10 flex flex-col items-center justify-center hover:border-blue-500 transition-colors bg-slate-50 dark:bg-slate-800/50">
