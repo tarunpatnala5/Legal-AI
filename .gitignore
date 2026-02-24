@@ -3,9 +3,9 @@ __pycache__/
 *.py[cod]
 *$py.class
 venv/
-.env
-*.db
+# *.db  <-- removed so legal_ai.db is tracked by git
 *.sqlite3
+backend/.env
 
 # Node
 node_modules/
