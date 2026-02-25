@@ -138,7 +138,6 @@ export default function TopNavbar() {
                         </div>
                         <div className="hidden md:flex flex-col items-start">
                             <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">{user?.full_name}</span>
-                            <span className="text-[10px] text-slate-500">{user?.is_admin ? "Administrator" : "Advocate"}</span>
                         </div>
                     </button>
                 ) : (
