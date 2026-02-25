@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form
+from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 from typing import List, Optional
 import shutil
@@ -46,7 +47,6 @@ def list_cases(
     db: Session = Depends(get_db)
 ):
     cases = db.query(case_model.CaseDocument).filter(case_model.CaseDocument.user_id == current_user.id).all()
-    # Simple serialization
     return [
         {
             "id": c.id, 
@@ -55,3 +55,43 @@ def list_cases(
             "target_language": c.target_language
         } for c in cases
     ]
+
+@router.get("/{case_id}/download")
+def download_case(
+    case_id: int,
+    current_user: user_model.User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    case = db.query(case_model.CaseDocument).filter(
+        case_model.CaseDocument.id == case_id,
+        case_model.CaseDocument.user_id == current_user.id
+    ).first()
+    if not case:
+        raise HTTPException(status_code=404, detail="Document not found")
+    if not os.path.exists(case.file_path):
+        raise HTTPException(status_code=404, detail="File not found on server")
+    return FileResponse(
+        path=case.file_path,
+        filename=case.filename,
+        media_type="application/octet-stream"
+    )
+
+@router.delete("/{case_id}")
+def delete_case(
+    case_id: int,
+    current_user: user_model.User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    case = db.query(case_model.CaseDocument).filter(
+        case_model.CaseDocument.id == case_id,
+        case_model.CaseDocument.user_id == current_user.id
+    ).first()
+    if not case:
+        raise HTTPException(status_code=404, detail="Document not found")
+    # Remove file from disk if it exists
+    if os.path.exists(case.file_path):
+        os.remove(case.file_path)
+    db.delete(case)
+    db.commit()
+    return {"message": "Document deleted successfully"}
+
