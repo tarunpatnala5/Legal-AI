@@ -1,10 +1,12 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Calendar as CalendarIcon, Clock, Plus, Bell, BellOff, CheckCircle, Loader2, X, Trash2, ChevronLeft, ChevronRight } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { Calendar as CalendarIcon, Clock, Plus, Bell, BellOff, Loader2, X, Trash2, ChevronLeft, ChevronRight, LogIn } from "lucide-react";
 import api from "@/lib/api";
 import toast from "react-hot-toast";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/lib/auth-context";
 
 interface ScheduleEvent {
     id: number;
@@ -18,6 +20,8 @@ interface ScheduleEvent {
 type FilterType = 'all' | 'custom' | 'month';
 
 export default function SchedulePage() {
+    const router = useRouter();
+    const { isLoggedIn } = useAuth();
     const [events, setEvents] = useState<ScheduleEvent[]>([]);
     const [filteredEvents, setFilteredEvents] = useState<ScheduleEvent[]>([]);
     const [loading, setLoading] = useState(true);
@@ -36,8 +40,12 @@ export default function SchedulePage() {
     });
 
     useEffect(() => {
-        fetchSchedules();
-    }, []);
+        if (isLoggedIn) {
+            fetchSchedules();
+        } else {
+            setLoading(false);
+        }
+    }, [isLoggedIn]);
 
     useEffect(() => {
         filterEvents();
@@ -271,7 +279,14 @@ export default function SchedulePage() {
                         </p>
                     </div>
                     <button
-                        onClick={() => setShowModal(true)}
+                        onClick={() => {
+                            if (!isLoggedIn) {
+                                toast.error("Please login to add events");
+                                router.push("/auth/login?returnTo=/schedule");
+                                return;
+                            }
+                            setShowModal(true);
+                        }}
                         className="w-full sm:w-auto flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 sm:px-6 py-2 sm:py-3 rounded-xl font-medium shadow-lg shadow-blue-600/30 transition-all hover:shadow-xl hover:shadow-blue-600/40 text-sm sm:text-base"
                     >
                         <Plus size={18} className="sm:w-5 sm:h-5" />
@@ -410,7 +425,22 @@ export default function SchedulePage() {
 
                             {/* Events Display */}
                             <div className="space-y-3 sm:space-y-4">
-                                {filteredEvents.length === 0 && (
+                                {!isLoggedIn && (
+                                    <div className="text-center py-8 sm:py-12">
+                                        <LogIn size={40} className="sm:w-12 sm:h-12 mx-auto text-slate-300 dark:text-slate-600 mb-3 sm:mb-4" />
+                                        <p className="text-sm sm:text-base text-slate-500 dark:text-slate-400 italic mb-4">
+                                            Login to see your scheduled events
+                                        </p>
+                                        <button
+                                            onClick={() => router.push("/auth/login?returnTo=/schedule")}
+                                            className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl text-sm font-medium transition"
+                                        >
+                                            <LogIn size={16} />
+                                            Login
+                                        </button>
+                                    </div>
+                                )}
+                                {isLoggedIn && filteredEvents.length === 0 && (
                                     <div className="text-center py-8 sm:py-12">
                                         <CalendarIcon size={40} className="sm:w-12 sm:h-12 mx-auto text-slate-300 dark:text-slate-700 mb-3 sm:mb-4" />
                                         <p className="text-sm sm:text-base text-slate-500 dark:text-slate-400 italic">

@@ -11,31 +11,33 @@ const api = axios.create({
 // Add a request interceptor to attach the auth token
 api.interceptors.request.use(
     (config) => {
-        // Check if running in browser
         if (typeof window !== 'undefined') {
-            const token = localStorage.getItem('token'); // Or get from NextAuth session
+            const token = localStorage.getItem('token');
             if (token) {
                 config.headers.Authorization = `Bearer ${token}`;
             }
         }
         return config;
     },
-    (error) => {
-        return Promise.reject(error);
-    }
+    (error) => Promise.reject(error)
 );
 
-// Add a response interceptor to handle 401 errors globally
+// Add a response interceptor to handle 401 errors globally.
+// Only redirect to login if the user HAD a token (i.e. it expired).
+// Guests browsing without a token are NOT redirected.
 api.interceptors.response.use(
     (response) => response,
     (error) => {
         if (typeof window !== 'undefined' && error.response?.status === 401) {
-            // Token expired or invalid
-            localStorage.removeItem('token');
-            if (!window.location.pathname.includes('/auth/login')) {
-                window.location.href = '/auth/login';
-                // Use window.location to force a hard refresh and state reset
+            const hadToken = !!localStorage.getItem('token');
+            if (hadToken) {
+                // Token expired — clear it and send user to login
+                localStorage.removeItem('token');
+                if (!window.location.pathname.includes('/auth/login')) {
+                    window.location.href = '/auth/login';
+                }
             }
+            // Guests (no token) just get the error propagated — no redirect
         }
         return Promise.reject(error);
     }

@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -18,8 +18,10 @@ const schema = z.object({
 
 type FormData = z.infer<typeof schema>;
 
-export default function LoginPage() {
+function LoginForm() {
     const router = useRouter();
+    const searchParams = useSearchParams();
+    const returnTo = searchParams.get("returnTo") ?? "/";
     const { login } = useAuth();
     const [loading, setLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
@@ -41,7 +43,7 @@ export default function LoginPage() {
 
             await login(res.data.access_token);
             toast.success("Login successful");
-            router.push("/");
+            router.push(returnTo);
         } catch (error: any) {
             if (error.response?.status === 401) {
                 toast.error("Invalid credentials");
@@ -113,5 +115,13 @@ export default function LoginPage() {
                 </p>
             </div>
         </div>
+    );
+}
+
+export default function LoginPage() {
+    return (
+        <Suspense>
+            <LoginForm />
+        </Suspense>
     );
 }

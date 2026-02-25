@@ -3,8 +3,10 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import api from "@/lib/api";
-import { Calendar, BookOpen, AlertCircle, Search, ExternalLink } from "lucide-react";
+import { Calendar, BookOpen, AlertCircle, Search, ExternalLink, Plus } from "lucide-react";
+import { useAuth } from "@/lib/auth-context";
 
 interface Judgment {
   title: string;
@@ -15,14 +17,17 @@ interface Judgment {
 }
 
 export default function Home() {
+  const router = useRouter();
+  const { isLoggedIn } = useAuth();
   const [judgments, setJudgments] = useState<Judgment[]>([]);
   const [filteredJudgments, setFilteredJudgments] = useState<Judgment[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
+  const [upcomingCount, setUpcomingCount] = useState<number | null>(null);
+  const [pendingDraftsCount, setPendingDraftsCount] = useState<number | null>(null);
 
   const fetchJudgments = async () => {
     try {
-      // Fetch from backend API
       const response = await api.get("/judgments/live");
       setJudgments(response.data);
       setFilteredJudgments(response.data);
@@ -33,11 +38,37 @@ export default function Home() {
     }
   };
 
+  const fetchDashboardStats = async () => {
+    try {
+      const [scheduleRes, casesRes] = await Promise.all([
+        api.get("/schedule/upcoming?days=7"),
+        api.get("/cases/"),
+      ]);
+      setUpcomingCount(scheduleRes.data.length);
+      // Pending Drafts = cases that are pending translation / awaiting review
+      const pending = casesRes.data.filter((c: any) =>
+        (c.translated_content ?? "").toLowerCase().includes("pending") ||
+        c.status === "pending"
+      );
+      setPendingDraftsCount(pending.length);
+    } catch {
+      // User not logged in or error — show dashes
+      setUpcomingCount(null);
+      setPendingDraftsCount(null);
+    }
+  };
+
   useEffect(() => {
     fetchJudgments();
-    const interval = setInterval(fetchJudgments, 300000); // 5 minutes
+    const interval = setInterval(fetchJudgments, 300000);
     return () => clearInterval(interval);
   }, []);
+
+  useEffect(() => {
+    if (isLoggedIn) {
+      fetchDashboardStats();
+    }
+  }, [isLoggedIn]);
 
   useEffect(() => {
     if (!searchQuery) {
@@ -53,6 +84,14 @@ export default function Home() {
     }
   }, [searchQuery, judgments]);
 
+  const handleNewCase = () => {
+    if (!isLoggedIn) {
+      router.push("/auth/login?returnTo=/cases/new");
+    } else {
+      router.push("/cases/new");
+    }
+  };
+
   return (
     <div className="max-w-7xl mx-auto space-y-8">
       <div className="flex items-center justify-between">
@@ -64,12 +103,17 @@ export default function Home() {
             Real-time updates from Supreme Court of India
           </p>
         </div>
-        <button className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition shadow-lg shadow-blue-500/20">
+        <button
+          onClick={handleNewCase}
+          className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition shadow-lg shadow-blue-500/20"
+        >
+          <Plus size={16} />
           New Case Analysis
         </button>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {/* Live Judgments */}
         <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800">
           <div className="flex items-center gap-3 text-blue-500 mb-2">
             <BookOpen size={24} />
@@ -79,22 +123,48 @@ export default function Home() {
           <p className="text-xs text-slate-500 mt-1">Updates this week</p>
         </div>
 
+        {/* Upcoming Hearings */}
         <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800">
           <div className="flex items-center gap-3 text-purple-500 mb-2">
             <Calendar size={24} />
             <span className="font-semibold">Upcoming Hearings</span>
           </div>
-          <div className="text-3xl font-bold text-slate-800 dark:text-white">5</div>
-          <p className="text-xs text-slate-500 mt-1">Scheduled for next 7 days</p>
+          <div className="text-3xl font-bold text-slate-800 dark:text-white">
+            {isLoggedIn
+              ? upcomingCount === null ? "—" : upcomingCount
+              : <span className="text-lg text-slate-400 dark:text-slate-500 font-medium">Login to view</span>
+            }
+          </div>
+          <p className="text-xs text-slate-500 mt-1">
+            {isLoggedIn ? "Scheduled for next 7 days" : ""}
+          </p>
+          {isLoggedIn && (
+            <Link href="/schedule" className="text-xs text-purple-500 hover:underline mt-1 inline-block">
+              View schedule →
+            </Link>
+          )}
         </div>
 
+        {/* Pending Drafts */}
         <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800">
           <div className="flex items-center gap-3 text-amber-500 mb-2">
             <AlertCircle size={24} />
             <span className="font-semibold">Pending Drafts</span>
           </div>
-          <div className="text-3xl font-bold text-slate-800 dark:text-white">2</div>
-          <p className="text-xs text-slate-500 mt-1">Requires attention</p>
+          <div className="text-3xl font-bold text-slate-800 dark:text-white">
+            {isLoggedIn
+              ? pendingDraftsCount === null ? "—" : pendingDraftsCount
+              : <span className="text-lg text-slate-400 dark:text-slate-500 font-medium">Login to view</span>
+            }
+          </div>
+          <p className="text-xs text-slate-500 mt-1">
+            {isLoggedIn ? "Cases requiring attention" : ""}
+          </p>
+          {isLoggedIn && (
+            <Link href="/library" className="text-xs text-amber-500 hover:underline mt-1 inline-block">
+              View library →
+            </Link>
+          )}
         </div>
       </div>
 
@@ -141,8 +211,8 @@ export default function Home() {
                           {item.date}
                         </span>
                         <span className={`text-[10px] font-bold px-2 py-0.5 rounded uppercase ${item.category === 'Criminal' ? 'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400' :
-                            item.category === 'Civil' ? 'bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400' :
-                              'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400'
+                          item.category === 'Civil' ? 'bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400' :
+                            'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400'
                           }`}>
                           {item.category}
                         </span>

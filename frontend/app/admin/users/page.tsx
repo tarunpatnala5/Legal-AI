@@ -156,9 +156,9 @@ export default function AdminUsersPage() {
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                            {users.map(u => (
+                            {users.map((u, index) => (
                                 <tr key={u.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition">
-                                    <td className="px-4 py-4 text-sm font-mono text-slate-500">#{u.id}</td>
+                                    <td className="px-4 py-4 text-sm font-mono text-slate-500">{index + 1}</td>
                                     <td className="px-4 py-4">
                                         <div className="flex items-center gap-3">
                                             <div className="w-9 h-9 rounded-full bg-blue-600 flex items-center justify-center text-white font-bold text-sm">

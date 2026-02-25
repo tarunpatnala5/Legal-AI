@@ -22,22 +22,30 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
+const TOKEN_KEY = "token";
+const USER_KEY = "cached_user";
+
 export function AuthProvider({ children }: { children: ReactNode }) {
+    // Start with null to match SSR — load cached user in effect to avoid hydration mismatch
     const [user, setUser] = useState<User | null>(null);
     const [isLoading, setIsLoading] = useState(true);
 
     const fetchUser = async () => {
-        const token = localStorage.getItem("token");
+        const token = localStorage.getItem(TOKEN_KEY);
         if (!token) {
+            localStorage.removeItem(USER_KEY);
             setUser(null);
             setIsLoading(false);
             return;
         }
         try {
             const res = await api.get("/auth/me");
-            setUser(res.data);
+            const userData: User = res.data;
+            localStorage.setItem(USER_KEY, JSON.stringify(userData));
+            setUser(userData);
         } catch {
-            localStorage.removeItem("token");
+            localStorage.removeItem(TOKEN_KEY);
+            localStorage.removeItem(USER_KEY);
             setUser(null);
         } finally {
             setIsLoading(false);
@@ -45,16 +53,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
 
     useEffect(() => {
+        // Load cached user immediately from localStorage so avatar shows on first paint
+        // This runs only on client — no SSR mismatch
+        try {
+            const cached = localStorage.getItem(USER_KEY);
+            if (cached) {
+                setUser(JSON.parse(cached));
+            }
+        } catch {
+            // ignore bad cache
+        }
+        // Then validate with backend in background
         fetchUser();
     }, []);
 
     const login = async (token: string) => {
-        localStorage.setItem("token", token);
+        localStorage.setItem(TOKEN_KEY, token);
         await fetchUser();
     };
 
     const logout = () => {
-        localStorage.removeItem("token");
+        localStorage.removeItem(TOKEN_KEY);
+        localStorage.removeItem(USER_KEY);
         setUser(null);
     };
 

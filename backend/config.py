@@ -6,7 +6,7 @@ class Settings(BaseSettings):
     DATABASE_URL: Optional[str] = "sqlite:///./legal_ai.db"
     SECRET_KEY: str = "your-super-secret-key-change-in-production"
     ALGORITHM: str = "HS256"
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 2880  # 48 hours
     
     # External APIs
     GOOGLE_TRANSLATE_API_KEY: Optional[str] = None

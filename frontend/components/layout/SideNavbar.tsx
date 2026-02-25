@@ -7,25 +7,30 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
     Home, MessageSquare, PlusCircle, Library, Calendar,
     Settings, ChevronLeft, ChevronRight, Scale, LogOut,
-    Menu, X, LogIn, Users, Lock
+    Menu, X, LogIn, Users
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth-context";
 
-// Always-visible nav items
-const publicNavItems = [
-    { name: "Home", href: "/", icon: Home, protected: false },
+const navItems = [
+    { name: "Home", href: "/" },
+    { name: "Chat Assistant", href: "/chat", icon: MessageSquare },
+    { name: "New Case", href: "/cases/new", icon: PlusCircle },
+    { name: "Library", href: "/library", icon: Library },
+    { name: "Schedule", href: "/schedule", icon: Calendar },
+    { name: "Settings", href: "/settings", icon: Settings },
 ];
 
-// These show always but redirect to login if not logged in
-const protectedNavItems = [
-    { name: "Chat Assistant", href: "/chat", icon: MessageSquare, protected: true },
-    { name: "New Case", href: "/cases/new", icon: PlusCircle, protected: true },
-    { name: "Library", href: "/library", icon: Library, protected: true },
-    { name: "Schedule", href: "/schedule", icon: Calendar, protected: true },
-    { name: "Settings", href: "/settings", icon: Settings, protected: false },
-];
+const iconMap: Record<string, React.ElementType> = {
+    "/": Home,
+    "/chat": MessageSquare,
+    "/cases/new": PlusCircle,
+    "/library": Library,
+    "/schedule": Calendar,
+    "/settings": Settings,
+    "/admin/users": Users,
+};
 
 export default function SideNavbar() {
     const [isCollapsed, setIsCollapsed] = useState(false);
@@ -43,38 +48,26 @@ export default function SideNavbar() {
     const closeMobileMenu = () => setIsMobileMenuOpen(false);
 
     const allNavItems = [
-        ...publicNavItems,
-        ...protectedNavItems,
-        ...(user?.is_admin ? [{ name: "Users", href: "/admin/users", icon: Users, protected: true }] : []),
+        ...navItems,
+        ...(user?.is_admin ? [{ name: "Users", href: "/admin/users" }] : []),
     ];
 
     const NavItem = ({ item }: { item: typeof allNavItems[0] }) => {
         const isActive = pathname === item.href;
-        const isLocked = item.protected && !isLoggedIn;
-
-        const handleClick = (e: React.MouseEvent) => {
-            closeMobileMenu();
-            if (isLocked) {
-                e.preventDefault();
-                toast.error("Please login to access this page");
-                router.push("/auth/login");
-            }
-        };
+        const Icon = iconMap[item.href] ?? Home;
 
         return (
             <Link
                 href={item.href}
-                onClick={handleClick}
+                onClick={closeMobileMenu}
                 className={cn(
                     "flex items-center gap-4 px-3 py-3 rounded-xl transition-all duration-200 group relative",
                     isActive
                         ? "bg-blue-50 dark:bg-blue-600/20 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-600/30"
-                        : isLocked
-                            ? "text-slate-400 dark:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-500 cursor-pointer"
-                            : "hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                        : "hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
                 )}
             >
-                <item.icon className={cn("w-6 h-6 min-w-[24px]", isActive && "text-blue-600 dark:text-blue-400")} />
+                <Icon className={cn("w-6 h-6 min-w-[24px]", isActive && "text-blue-600 dark:text-blue-400")} />
                 {!isCollapsed && (
                     <motion.span
                         initial={{ opacity: 0, x: -10 }}
@@ -84,13 +77,9 @@ export default function SideNavbar() {
                         {item.name}
                     </motion.span>
                 )}
-                {/* Lock icon for protected items when not logged in */}
-                {isLocked && !isCollapsed && (
-                    <Lock size={12} className="text-slate-300 dark:text-slate-600 shrink-0" />
-                )}
                 {isCollapsed && (
                     <div className="absolute left-full ml-2 px-2 py-1 bg-white dark:bg-slate-800 text-slate-800 dark:text-white text-sm rounded opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-50 shadow-lg border border-slate-200 dark:border-slate-700">
-                        {item.name}{isLocked ? " (Login required)" : ""}
+                        {item.name}
                     </div>
                 )}
             </Link>
@@ -162,14 +151,20 @@ export default function SideNavbar() {
                     {isLoggedIn ? (
                         <button
                             onClick={() => { handleLogout(); closeMobileMenu(); }}
-                            className="w-full flex items-center gap-4 px-3 py-3 rounded-xl hover:bg-red-50 dark:hover:bg-red-500/10 text-slate-500 dark:text-slate-400 hover:text-red-600 dark:hover:text-red-400 transition-all duration-200 group"
+                            className="w-full flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-red-50 dark:hover:bg-red-500/10 text-slate-500 dark:text-slate-400 hover:text-red-600 dark:hover:text-red-400 transition-all duration-200 group"
                         >
-                            <LogOut className="w-6 h-6 min-w-[24px]" />
+                            {/* User avatar showing initials */}
+                            <div className="w-8 h-8 min-w-[32px] rounded-full bg-blue-600 flex items-center justify-center text-white font-bold text-sm shrink-0">
+                                {user?.full_name
+                                    ? user.full_name.split(" ").map((w: string) => w[0]).join("").slice(0, 2).toUpperCase()
+                                    : user?.email?.[0]?.toUpperCase() ?? "?"}
+                            </div>
                             {!isCollapsed && (
-                                <motion.span initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="whitespace-nowrap font-medium">
+                                <motion.span initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="whitespace-nowrap font-medium flex-1 text-left">
                                     Sign Out
                                 </motion.span>
                             )}
+                            {!isCollapsed && <LogOut className="w-4 h-4 shrink-0 opacity-50 group-hover:opacity-100" />}
                         </button>
                     ) : (
                         <Link

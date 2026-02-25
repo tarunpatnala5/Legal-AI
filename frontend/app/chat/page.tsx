@@ -1,11 +1,13 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { Send, FileText, Bot, User, Paperclip, Plus, MessageSquare, Loader2, Calendar as CalendarIcon, Trash2, Menu, X } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { Send, FileText, Bot, User, Paperclip, Plus, MessageSquare, Loader2, Calendar as CalendarIcon, Trash2, Menu, X, LogIn } from "lucide-react";
 import api from "@/lib/api";
 import { cn } from "@/lib/utils";
 import toast from "react-hot-toast";
 import { motion, AnimatePresence } from "framer-motion";
+import { useAuth } from "@/lib/auth-context";
 
 interface Message {
     role: "user" | "assistant";
@@ -20,6 +22,8 @@ interface Session {
 }
 
 export default function ChatPage() {
+    const router = useRouter();
+    const { isLoggedIn } = useAuth();
     const [sessions, setSessions] = useState<Session[]>([]);
     const [currentSessionId, setCurrentSessionId] = useState<number | null>(null);
     const [messages, setMessages] = useState<Message[]>([]);
@@ -31,10 +35,12 @@ export default function ChatPage() {
     const fileInputRef = useRef<HTMLInputElement>(null);
     const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-    // Load Sessions on Mount
+    // Load Sessions on Mount (only for logged-in users)
     useEffect(() => {
-        fetchSessions();
-    }, []);
+        if (isLoggedIn) {
+            fetchSessions();
+        }
+    }, [isLoggedIn]);
 
     // Scroll to bottom when messages change
     useEffect(() => {
@@ -165,8 +171,12 @@ export default function ChatPage() {
     };
 
     const handleQuickSchedule = async (eventData: any) => {
+        if (!isLoggedIn) {
+            toast.error("Please login to add events to your calendar");
+            router.push("/auth/login?returnTo=/chat");
+            return;
+        }
         try {
-            // We need to construct a full datetime. Assuming 9 AM if not specified or just use 'time' field.
             const dateTimeStr = `${eventData.date}T${eventData.time || "10:00"}:00`;
 
             await api.post("/schedule/", {
@@ -254,34 +264,52 @@ export default function ChatPage() {
                 </button>
             </div>
             <div className="flex-1 overflow-y-auto p-2 space-y-1 min-h-0">
-                {sessions.map(session => (
-                    <div key={session.id} className="group relative">
+                {!isLoggedIn ? (
+                    <div className="flex flex-col items-center justify-center h-full py-10 px-4 text-center gap-3">
+                        <LogIn size={32} className="text-slate-300 dark:text-slate-600" />
+                        <p className="text-sm text-slate-500 dark:text-slate-400">
+                            Login to save and view your chat history
+                        </p>
                         <button
-                            onClick={() => loadSession(session.id)}
-                            className={cn(
-                                "w-full text-left p-3.5 rounded-xl text-sm truncate flex items-center gap-3 transition pr-12 min-h-[44px] touch-manipulation",
-                                currentSessionId === session.id
-                                    ? "bg-slate-100 dark:bg-slate-800 text-blue-600 font-medium"
-                                    : "text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/50 active:bg-slate-100 dark:active:bg-slate-800"
-                            )}
+                            onClick={() => router.push("/auth/login?returnTo=/chat")}
+                            className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl text-sm font-medium transition"
                         >
-                            <MessageSquare size={16} className="shrink-0" />
-                            <span className="truncate">{session.title}</span>
-                        </button>
-                        <button
-                            onClick={(e) => handleDeleteSession(e, session.id)}
-                            className="absolute right-2 top-1/2 -translate-y-1/2 p-2.5 min-w-[44px] min-h-[44px] flex items-center justify-center text-slate-400 hover:text-red-500 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 lg:opacity-0 lg:group-hover:opacity-100 transition"
-                            title="Delete Conversation"
-                            aria-label="Delete conversation"
-                        >
-                            <Trash2 size={16} />
+                            <LogIn size={14} />
+                            Login
                         </button>
                     </div>
-                ))}
-                {sessions.length === 0 && (
-                    <div className="text-center py-10 text-slate-500 dark:text-slate-400 text-sm px-4">
-                        No history yet. Start a new chat above.
-                    </div>
+                ) : (
+                    <>
+                        {sessions.map(session => (
+                            <div key={session.id} className="group relative">
+                                <button
+                                    onClick={() => loadSession(session.id)}
+                                    className={cn(
+                                        "w-full text-left p-3.5 rounded-xl text-sm truncate flex items-center gap-3 transition pr-12 min-h-[44px] touch-manipulation",
+                                        currentSessionId === session.id
+                                            ? "bg-slate-100 dark:bg-slate-800 text-blue-600 font-medium"
+                                            : "text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/50 active:bg-slate-100 dark:active:bg-slate-800"
+                                    )}
+                                >
+                                    <MessageSquare size={16} className="shrink-0" />
+                                    <span className="truncate">{session.title}</span>
+                                </button>
+                                <button
+                                    onClick={(e) => handleDeleteSession(e, session.id)}
+                                    className="absolute right-2 top-1/2 -translate-y-1/2 p-2.5 min-w-[44px] min-h-[44px] flex items-center justify-center text-slate-400 hover:text-red-500 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 lg:opacity-0 lg:group-hover:opacity-100 transition"
+                                    title="Delete Conversation"
+                                    aria-label="Delete conversation"
+                                >
+                                    <Trash2 size={16} />
+                                </button>
+                            </div>
+                        ))}
+                        {sessions.length === 0 && (
+                            <div className="text-center py-10 text-slate-500 dark:text-slate-400 text-sm px-4">
+                                No history yet. Start a new chat above.
+                            </div>
+                        )}
+                    </>
                 )}
             </div>
         </div>
