@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { FileText, Search, Filter, Download, Eye, Trash2 } from "lucide-react";
+import { FileText, Search, Filter, Download, Trash2 } from "lucide-react";
 import api from "@/lib/api";
 
 interface CaseDoc {
@@ -170,9 +170,9 @@ export default function LibraryPage() {
                             filteredCases.map((doc) => (
                                 <tr
                                     key={doc.id}
-                                    className="hover:bg-slate-50 dark:hover:bg-slate-700/30 transition"
+                                    className="hover:bg-slate-50 dark:hover:bg-slate-700/30 transition cursor-pointer"
                                 >
-                                    <td className="px-6 py-4 flex items-center gap-3">
+                                    <td onClick={() => handleView(doc)} className="px-6 py-4 flex items-center gap-3">
                                         <div className="w-8 h-8 rounded bg-red-100 dark:bg-red-900/20 text-red-500 flex items-center justify-center">
                                             <FileText size={16} />
                                         </div>
@@ -180,24 +180,16 @@ export default function LibraryPage() {
                                             {doc.filename}
                                         </span>
                                     </td>
-                                    <td className="px-6 py-4 text-slate-600 dark:text-slate-400">
+                                    <td onClick={() => handleView(doc)} className="px-6 py-4 text-slate-600 dark:text-slate-400">
                                         <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400">
                                             {doc.target_language}
                                         </span>
                                     </td>
-                                    <td className="px-6 py-4 text-slate-500">
+                                    <td onClick={() => handleView(doc)} className="px-6 py-4 text-slate-500">
                                         {new Date(doc.uploaded_at).toLocaleDateString()}
                                     </td>
                                     <td className="px-6 py-4 text-right">
                                         <div className="flex items-center justify-end gap-1">
-                                            {/* View */}
-                                            <button
-                                                onClick={() => handleView(doc)}
-                                                title="View translated document"
-                                                className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-700 rounded text-slate-500 hover:text-blue-600 transition"
-                                            >
-                                                <Eye size={16} />
-                                            </button>
                                             {/* Download */}
                                             <button
                                                 onClick={() => handleDownload(doc)}
