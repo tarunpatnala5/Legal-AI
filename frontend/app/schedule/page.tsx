@@ -134,7 +134,10 @@ export default function SchedulePage() {
         }
 
         try {
-            const datetime = new Date(`${newEvent.court_date}T${newEvent.time}:00`);
+            // Build datetime from local date + time parts to avoid UTC offset issues
+            const [year, month, day] = newEvent.court_date.split('-').map(Number);
+            const [hours, minutes] = newEvent.time.split(':').map(Number);
+            const datetime = new Date(year, month - 1, day, hours, minutes, 0);
 
             await api.post("/schedule/", {
                 case_name: newEvent.case_name,
@@ -146,7 +149,10 @@ export default function SchedulePage() {
 
             toast.success("Event Scheduled");
             setShowModal(false);
-            setNewEvent({ case_name: "", court_date: "", time: "10:00", status: "Scheduled", notification_enabled: true });
+            const now = new Date();
+            const hh = String(now.getHours()).padStart(2, '0');
+            const mm = String(now.getMinutes()).padStart(2, '0');
+            setNewEvent({ case_name: "", court_date: "", time: `${hh}:${mm}`, status: "Scheduled", notification_enabled: true });
             fetchSchedules();
         } catch (error: any) {
             if (error.response?.status === 401) {
@@ -285,6 +291,13 @@ export default function SchedulePage() {
                                 router.push("/auth/login?returnTo=/schedule");
                                 return;
                             }
+                            const now = new Date();
+                            const hh = String(now.getHours()).padStart(2, '0');
+                            const mm = String(now.getMinutes()).padStart(2, '0');
+                            const preDate = selectedDate
+                                ? `${selectedDate.getFullYear()}-${String(selectedDate.getMonth() + 1).padStart(2, '0')}-${String(selectedDate.getDate()).padStart(2, '0')}`
+                                : '';
+                            setNewEvent(prev => ({ ...prev, time: `${hh}:${mm}`, court_date: preDate }));
                             setShowModal(true);
                         }}
                         className="w-full sm:w-auto flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 sm:px-6 py-2 sm:py-3 rounded-xl font-medium shadow-lg shadow-blue-600/30 transition-all hover:shadow-xl hover:shadow-blue-600/40 text-sm sm:text-base"
@@ -405,9 +418,9 @@ export default function SchedulePage() {
                                 <h2 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white">
                                     {filterType === 'all' ? 'All Events' :
                                         filterType === 'custom' && selectedDate ?
-                                            selectedDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) :
+                                            selectedDate.toLocaleDateString('en-IN', { month: 'long', day: 'numeric', year: 'numeric' }) :
                                             filterType === 'month' ?
-                                                currentMonth.toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) : 'Events'}
+                                                currentMonth.toLocaleDateString('en-IN', { month: 'long', year: 'numeric' }) : 'Events'}
                                 </h2>
                                 {(filterType !== 'all' || selectedDate) && (
                                     <button
@@ -445,7 +458,7 @@ export default function SchedulePage() {
                                         <CalendarIcon size={40} className="sm:w-12 sm:h-12 mx-auto text-slate-300 dark:text-slate-700 mb-3 sm:mb-4" />
                                         <p className="text-sm sm:text-base text-slate-500 dark:text-slate-400 italic">
                                             {filterType === 'custom' && selectedDate
-                                                ? `No events scheduled for ${selectedDate.toLocaleDateString()}`
+                                                ? `No events scheduled for ${selectedDate.toLocaleDateString('en-IN')}`
                                                 : filterType === 'month'
                                                     ? 'No events this month'
                                                     : 'No upcoming events'}
@@ -485,8 +498,8 @@ export default function SchedulePage() {
                                             </div>
 
                                             <div className="flex items-center gap-3 sm:gap-4 text-[10px] sm:text-xs text-slate-500 ml-2 sm:ml-4 font-medium">
-                                                <span className="flex items-center gap-1 sm:gap-1.5"><CalendarIcon size={12} className="sm:w-3.5 sm:h-3.5" /> {date.toLocaleDateString()}</span>
-                                                <span className="flex items-center gap-1 sm:gap-1.5"><Clock size={12} className="sm:w-3.5 sm:h-3.5" /> {date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                                                <span className="flex items-center gap-1 sm:gap-1.5"><CalendarIcon size={12} className="sm:w-3.5 sm:h-3.5" /> {date.toLocaleDateString('en-IN')}</span>
+                                                <span className="flex items-center gap-1 sm:gap-1.5"><Clock size={12} className="sm:w-3.5 sm:h-3.5" /> {date.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true })}</span>
                                             </div>
                                         </div>
                                     );
