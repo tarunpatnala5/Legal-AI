@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Calendar as CalendarIcon, Clock, Plus, Bell, BellOff, Loader2, X, Trash2, ChevronLeft, ChevronRight, LogIn, Pencil } from "lucide-react";
+import { Calendar as CalendarIcon, Clock, Plus, Bell, BellOff, Loader2, X, Trash2, ChevronLeft, ChevronRight, LogIn, Pencil, ChevronDown } from "lucide-react";
 import api from "@/lib/api";
 import toast from "react-hot-toast";
 import { cn } from "@/lib/utils";
@@ -172,8 +172,11 @@ export default function SchedulePage() {
         }
     };
 
+    // Ensure UTC: backend may return datetime without 'Z', causing browser to treat it as local time
+    const toUtcDate = (s: string) => new Date(s.endsWith('Z') || s.includes('+') ? s : s + 'Z');
+
     const handleOpenEdit = (event: ScheduleEvent) => {
-        const d = new Date(event.court_date);
+        const d = toUtcDate(event.court_date);
         const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
         const timeStr = `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
         setEditingEvent(event);
@@ -521,7 +524,7 @@ export default function SchedulePage() {
                                     </div>
                                 )}
                                 {filteredEvents.map((event) => {
-                                    const date = new Date(event.court_date);
+                                    const date = toUtcDate(event.court_date);
                                     return (
                                         <div
                                             key={event.id}
@@ -617,15 +620,18 @@ export default function SchedulePage() {
                             <div className="grid grid-cols-2 gap-3 sm:gap-4">
                                 <div>
                                     <label className="block text-xs sm:text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Status</label>
-                                    <select
-                                        value={newEvent.status}
-                                        onChange={e => setNewEvent({ ...newEvent, status: e.target.value })}
-                                        className="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-xl px-3 sm:px-4 py-2.5 sm:py-3 text-sm focus:ring-2 focus:ring-blue-500 outline-none appearance-none"
-                                    >
-                                        <option value="Scheduled">Scheduled</option>
-                                        <option value="In Progress">In Progress</option>
-                                        <option value="Closed">Closed</option>
-                                    </select>
+                                    <div className="relative">
+                                        <select
+                                            value={newEvent.status}
+                                            onChange={e => setNewEvent({ ...newEvent, status: e.target.value })}
+                                            className="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-xl px-3 sm:px-4 py-2.5 sm:py-3 text-sm focus:ring-2 focus:ring-blue-500 outline-none appearance-none pr-8"
+                                        >
+                                            <option value="Scheduled">Scheduled</option>
+                                            <option value="In Progress">In Progress</option>
+                                            <option value="Closed">Closed</option>
+                                        </select>
+                                        <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                                    </div>
                                 </div>
                                 <div className="flex items-end pb-2 sm:pb-3">
                                     <label className="flex items-center gap-2 sm:gap-3 cursor-pointer group">
@@ -636,7 +642,7 @@ export default function SchedulePage() {
                                                 checked={newEvent.notification_enabled}
                                                 onChange={e => setNewEvent({ ...newEvent, notification_enabled: e.target.checked })}
                                             />
-                                            <div className="w-9 h-5 sm:w-10 sm:h-6 bg-slate-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 sm:after:h-5 sm:after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
+                                            <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-5 peer-checked:after:border-white after:content-[''] after:absolute after:top-[3px] after:left-[3px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-[18px] after:w-[18px] after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
                                         </div>
                                         <span className="text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 group-hover:text-blue-600 transition">
                                             Notify Me
@@ -710,15 +716,18 @@ export default function SchedulePage() {
                             <div className="grid grid-cols-2 gap-3 sm:gap-4">
                                 <div>
                                     <label className="block text-xs sm:text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Status</label>
-                                    <select
-                                        value={editForm.status}
-                                        onChange={e => setEditForm({ ...editForm, status: e.target.value })}
-                                        className="w-full bg-slate-50 dark:bg-slate-900 border-none rounded-xl px-3 sm:px-4 py-2.5 sm:py-3 text-sm focus:ring-2 focus:ring-blue-500 outline-none appearance-none"
-                                    >
-                                        <option value="Scheduled">Scheduled</option>
-                                        <option value="In Progress">In Progress</option>
-                                        <option value="Closed">Closed</option>
-                                    </select>
+                                    <div className="relative">
+                                        <select
+                                            value={editForm.status}
+                                            onChange={e => setEditForm({ ...editForm, status: e.target.value })}
+                                            className="w-full bg-slate-50 dark:bg-slate-900 border-none rounded-xl px-3 sm:px-4 py-2.5 sm:py-3 text-sm focus:ring-2 focus:ring-blue-500 outline-none appearance-none pr-8"
+                                        >
+                                            <option value="Scheduled">Scheduled</option>
+                                            <option value="In Progress">In Progress</option>
+                                            <option value="Closed">Closed</option>
+                                        </select>
+                                        <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                                    </div>
                                 </div>
                                 <div className="flex items-end pb-2 sm:pb-3">
                                     <label className="flex items-center gap-2 sm:gap-3 cursor-pointer group">
@@ -729,7 +738,7 @@ export default function SchedulePage() {
                                                 checked={editForm.notification_enabled}
                                                 onChange={e => setEditForm({ ...editForm, notification_enabled: e.target.checked })}
                                             />
-                                            <div className="w-9 h-5 sm:w-10 sm:h-6 bg-slate-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 sm:after:h-5 sm:after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
+                                            <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-5 peer-checked:after:border-white after:content-[''] after:absolute after:top-[3px] after:left-[3px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-[18px] after:w-[18px] after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
                                         </div>
                                         <span className="text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 group-hover:text-blue-600 transition">Notify Me</span>
                                     </label>
