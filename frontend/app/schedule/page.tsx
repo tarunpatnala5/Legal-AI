@@ -528,8 +528,7 @@ export default function SchedulePage() {
                                     return (
                                         <div
                                             key={event.id}
-                                            onClick={() => handleOpenEdit(event)}
-                                            className="bg-white dark:bg-slate-800 p-3 sm:p-4 lg:p-5 rounded-xl sm:rounded-2xl border border-slate-200 dark:border-slate-800 flex flex-col gap-2 sm:gap-3 relative overflow-hidden group shadow-sm hover:shadow-md transition cursor-pointer hover:border-blue-300 dark:hover:border-blue-700"
+                                            className="bg-white dark:bg-slate-800 p-3 sm:p-4 lg:p-5 rounded-xl sm:rounded-2xl border border-slate-200 dark:border-slate-800 flex flex-col gap-2 sm:gap-3 relative overflow-hidden group shadow-sm hover:shadow-md transition"
                                         >
                                             <div className={cn("absolute left-0 top-0 w-1 sm:w-1.5 h-full rounded-l-full",
                                                 event.status === 'Closed' ? "bg-slate-400" :
@@ -546,12 +545,15 @@ export default function SchedulePage() {
                                                         <Bell size={14} className="sm:w-4 sm:h-4 text-amber-500" /> :
                                                         <BellOff size={14} className="sm:w-4 sm:h-4 text-slate-300" />
                                                     }
-                                                    <Pencil size={14} className="sm:w-4 sm:h-4 text-slate-400 group-hover:text-blue-500 transition-colors" />
                                                     <button
-                                                        onClick={(e) => {
-                                                            e.stopPropagation();
-                                                            handleDeleteEvent(event.id);
-                                                        }}
+                                                        onClick={() => handleOpenEdit(event)}
+                                                        className="text-slate-400 hover:text-blue-500 transition-colors p-0.5 sm:p-1"
+                                                        title="Edit Event"
+                                                    >
+                                                        <Pencil size={14} className="sm:w-4 sm:h-4" />
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleDeleteEvent(event.id)}
                                                         className="ml-0.5 text-slate-400 hover:text-red-500 transition-colors p-0.5 sm:p-1"
                                                         title="Delete Event"
                                                     >
@@ -562,7 +564,7 @@ export default function SchedulePage() {
 
                                             <div className="flex items-center gap-3 sm:gap-4 text-[10px] sm:text-xs text-slate-500 ml-2 sm:ml-4 font-medium">
                                                 <span className="flex items-center gap-1 sm:gap-1.5"><CalendarIcon size={12} className="sm:w-3.5 sm:h-3.5" /> {date.toLocaleDateString('en-IN')}</span>
-                                                <span className="flex items-center gap-1 sm:gap-1.5"><Clock size={12} className="sm:w-3.5 sm:h-3.5" /> {date.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true })}</span>
+                                                <span className="flex items-center gap-1 sm:gap-1.5"><Clock size={12} className="sm:w-3.5 sm:h-3.5" /> {date.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: false })}</span>
                                             </div>
                                         </div>
                                     );
