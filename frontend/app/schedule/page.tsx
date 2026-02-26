@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { Calendar as CalendarIcon, Clock, Plus, Bell, BellOff, Loader2, X, Trash2, ChevronLeft, ChevronRight, LogIn, Pencil, ChevronDown } from "lucide-react";
 import api from "@/lib/api";
@@ -29,6 +29,11 @@ export default function SchedulePage() {
     const [showEditModal, setShowEditModal] = useState(false);
     const [editingEvent, setEditingEvent] = useState<ScheduleEvent | null>(null);
     const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
+    // Debounce refs: close time picker after 400ms of no interaction
+    const addTimeInputRef = useRef<HTMLInputElement>(null);
+    const editTimeInputRef = useRef<HTMLInputElement>(null);
+    const addTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const editTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const [editForm, setEditForm] = useState({
         case_name: "",
         court_date: "",
@@ -644,9 +649,16 @@ export default function SchedulePage() {
                                 <div>
                                     <label className="block text-xs sm:text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Time</label>
                                     <input
+                                        ref={addTimeInputRef}
                                         type="time"
                                         value={newEvent.time}
-                                        onChange={e => { setNewEvent({ ...newEvent, time: e.target.value }); e.target.blur(); }}
+                                        onChange={e => {
+                                            setNewEvent({ ...newEvent, time: e.target.value });
+                                            if (addTimeoutRef.current) clearTimeout(addTimeoutRef.current);
+                                            addTimeoutRef.current = setTimeout(() => {
+                                                addTimeInputRef.current?.blur();
+                                            }, 400);
+                                        }}
                                         className="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-xl px-3 sm:px-4 py-2.5 sm:py-3 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
                                     />
                                 </div>
@@ -740,9 +752,16 @@ export default function SchedulePage() {
                                 <div>
                                     <label className="block text-xs sm:text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Time</label>
                                     <input
+                                        ref={editTimeInputRef}
                                         type="time"
                                         value={editForm.time}
-                                        onChange={e => { setEditForm({ ...editForm, time: e.target.value }); e.target.blur(); }}
+                                        onChange={e => {
+                                            setEditForm({ ...editForm, time: e.target.value });
+                                            if (editTimeoutRef.current) clearTimeout(editTimeoutRef.current);
+                                            editTimeoutRef.current = setTimeout(() => {
+                                                editTimeInputRef.current?.blur();
+                                            }, 400);
+                                        }}
                                         className="w-full bg-slate-50 dark:bg-slate-900 border-none rounded-xl px-3 sm:px-4 py-2.5 sm:py-3 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
                                     />
                                 </div>
