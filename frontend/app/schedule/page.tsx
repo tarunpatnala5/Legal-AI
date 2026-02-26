@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Calendar as CalendarIcon, Clock, Plus, Bell, BellOff, Loader2, X, Trash2, ChevronLeft, ChevronRight, LogIn } from "lucide-react";
+import { Calendar as CalendarIcon, Clock, Plus, Bell, BellOff, Loader2, X, Trash2, ChevronLeft, ChevronRight, LogIn, Pencil } from "lucide-react";
 import api from "@/lib/api";
 import toast from "react-hot-toast";
 import { cn } from "@/lib/utils";
@@ -26,6 +26,15 @@ export default function SchedulePage() {
     const [filteredEvents, setFilteredEvents] = useState<ScheduleEvent[]>([]);
     const [loading, setLoading] = useState(true);
     const [showModal, setShowModal] = useState(false);
+    const [showEditModal, setShowEditModal] = useState(false);
+    const [editingEvent, setEditingEvent] = useState<ScheduleEvent | null>(null);
+    const [editForm, setEditForm] = useState({
+        case_name: "",
+        court_date: "",
+        time: "",
+        status: "Scheduled",
+        notification_enabled: true
+    });
     const [filterType, setFilterType] = useState<FilterType>('all');
     const [selectedDate, setSelectedDate] = useState<Date | null>(null);
     const [currentMonth, setCurrentMonth] = useState(new Date());
@@ -159,6 +168,52 @@ export default function SchedulePage() {
                 toast.error("Session expired. Please log in again.");
             } else {
                 toast.error("Failed to add event");
+            }
+        }
+    };
+
+    const handleOpenEdit = (event: ScheduleEvent) => {
+        const d = new Date(event.court_date);
+        const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+        const timeStr = `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+        setEditingEvent(event);
+        setEditForm({
+            case_name: event.case_name,
+            court_date: dateStr,
+            time: timeStr,
+            status: event.status,
+            notification_enabled: event.notification_enabled
+        });
+        setShowEditModal(true);
+    };
+
+    const handleUpdateEvent = async () => {
+        if (!editingEvent || !editForm.case_name || !editForm.court_date) {
+            toast.error("Please fill all fields");
+            return;
+        }
+        try {
+            const [year, month, day] = editForm.court_date.split('-').map(Number);
+            const [hours, minutes] = editForm.time.split(':').map(Number);
+            const datetime = new Date(year, month - 1, day, hours, minutes, 0);
+
+            await api.put(`/schedule/${editingEvent.id}`, {
+                case_name: editForm.case_name,
+                court_date: datetime.toISOString(),
+                reminder_date: datetime.toISOString(),
+                status: editForm.status,
+                notification_enabled: editForm.notification_enabled
+            });
+
+            toast.success("Event updated");
+            setShowEditModal(false);
+            setEditingEvent(null);
+            fetchSchedules();
+        } catch (error: any) {
+            if (error.response?.status === 401) {
+                toast.error("Session expired. Please log in again.");
+            } else {
+                toast.error("Failed to update event");
             }
         }
     };
@@ -468,7 +523,11 @@ export default function SchedulePage() {
                                 {filteredEvents.map((event) => {
                                     const date = new Date(event.court_date);
                                     return (
-                                        <div key={event.id} className="bg-white dark:bg-slate-800 p-3 sm:p-4 lg:p-5 rounded-xl sm:rounded-2xl border border-slate-200 dark:border-slate-800 flex flex-col gap-2 sm:gap-3 relative overflow-hidden group shadow-sm hover:shadow-md transition">
+                                        <div
+                                            key={event.id}
+                                            onClick={() => handleOpenEdit(event)}
+                                            className="bg-white dark:bg-slate-800 p-3 sm:p-4 lg:p-5 rounded-xl sm:rounded-2xl border border-slate-200 dark:border-slate-800 flex flex-col gap-2 sm:gap-3 relative overflow-hidden group shadow-sm hover:shadow-md transition cursor-pointer hover:border-blue-300 dark:hover:border-blue-700"
+                                        >
                                             <div className={cn("absolute left-0 top-0 w-1 sm:w-1.5 h-full rounded-l-full",
                                                 event.status === 'Closed' ? "bg-slate-400" :
                                                     event.status === 'In Progress' ? "bg-blue-500" : "bg-amber-500"
@@ -484,12 +543,13 @@ export default function SchedulePage() {
                                                         <Bell size={14} className="sm:w-4 sm:h-4 text-amber-500" /> :
                                                         <BellOff size={14} className="sm:w-4 sm:h-4 text-slate-300" />
                                                     }
+                                                    <Pencil size={14} className="sm:w-4 sm:h-4 text-slate-400 group-hover:text-blue-500 transition-colors" />
                                                     <button
                                                         onClick={(e) => {
                                                             e.stopPropagation();
                                                             handleDeleteEvent(event.id);
                                                         }}
-                                                        className="ml-1 sm:ml-2 text-slate-400 hover:text-red-500 transition-colors p-0.5 sm:p-1"
+                                                        className="ml-0.5 text-slate-400 hover:text-red-500 transition-colors p-0.5 sm:p-1"
                                                         title="Delete Event"
                                                     >
                                                         <Trash2 size={14} className="sm:w-4 sm:h-4" />
@@ -598,6 +658,97 @@ export default function SchedulePage() {
                                 className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2.5 sm:py-3 rounded-xl font-medium transition shadow-lg shadow-blue-600/20 text-sm sm:text-base"
                             >
                                 Schedule Event
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {showEditModal && editingEvent && (
+                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-3 sm:p-4 animate-in fade-in duration-200">
+                    <div className="bg-white dark:bg-slate-800 rounded-2xl sm:rounded-3xl w-full max-w-md p-6 sm:p-8 shadow-2xl transform transition-all max-h-[90vh] overflow-y-auto">
+                        <div className="flex justify-between items-center mb-4 sm:mb-6">
+                            <h3 className="text-xl sm:text-2xl font-bold">Edit Event</h3>
+                            <button onClick={() => { setShowEditModal(false); setEditingEvent(null); }} className="text-slate-400 hover:text-slate-600">
+                                <X size={20} className="sm:w-6 sm:h-6" />
+                            </button>
+                        </div>
+
+                        <div className="space-y-3 sm:space-y-4">
+                            <div>
+                                <label className="block text-xs sm:text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Event Title</label>
+                                <input
+                                    type="text"
+                                    value={editForm.case_name}
+                                    onChange={e => setEditForm({ ...editForm, case_name: e.target.value })}
+                                    className="w-full bg-slate-50 dark:bg-slate-900 border-none rounded-xl px-3 sm:px-4 py-2.5 sm:py-3 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+                                    placeholder="e.g. Hearing vs State"
+                                />
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-3 sm:gap-4">
+                                <div>
+                                    <label className="block text-xs sm:text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Date</label>
+                                    <input
+                                        type="date"
+                                        value={editForm.court_date}
+                                        onChange={e => setEditForm({ ...editForm, court_date: e.target.value })}
+                                        className="w-full bg-slate-50 dark:bg-slate-900 border-none rounded-xl px-3 sm:px-4 py-2.5 sm:py-3 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-xs sm:text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Time</label>
+                                    <input
+                                        type="time"
+                                        value={editForm.time}
+                                        onChange={e => setEditForm({ ...editForm, time: e.target.value })}
+                                        className="w-full bg-slate-50 dark:bg-slate-900 border-none rounded-xl px-3 sm:px-4 py-2.5 sm:py-3 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-3 sm:gap-4">
+                                <div>
+                                    <label className="block text-xs sm:text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Status</label>
+                                    <select
+                                        value={editForm.status}
+                                        onChange={e => setEditForm({ ...editForm, status: e.target.value })}
+                                        className="w-full bg-slate-50 dark:bg-slate-900 border-none rounded-xl px-3 sm:px-4 py-2.5 sm:py-3 text-sm focus:ring-2 focus:ring-blue-500 outline-none appearance-none"
+                                    >
+                                        <option value="Scheduled">Scheduled</option>
+                                        <option value="In Progress">In Progress</option>
+                                        <option value="Closed">Closed</option>
+                                    </select>
+                                </div>
+                                <div className="flex items-end pb-2 sm:pb-3">
+                                    <label className="flex items-center gap-2 sm:gap-3 cursor-pointer group">
+                                        <div className="relative">
+                                            <input
+                                                type="checkbox"
+                                                className="sr-only peer"
+                                                checked={editForm.notification_enabled}
+                                                onChange={e => setEditForm({ ...editForm, notification_enabled: e.target.checked })}
+                                            />
+                                            <div className="w-9 h-5 sm:w-10 sm:h-6 bg-slate-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 sm:after:h-5 sm:after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
+                                        </div>
+                                        <span className="text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 group-hover:text-blue-600 transition">Notify Me</span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="flex gap-3 mt-6 sm:mt-8">
+                            <button
+                                onClick={() => { setShowEditModal(false); setEditingEvent(null); }}
+                                className="flex-1 bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 py-2.5 sm:py-3 rounded-xl font-medium transition text-sm sm:text-base"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={handleUpdateEvent}
+                                className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2.5 sm:py-3 rounded-xl font-medium transition shadow-lg shadow-blue-600/20 text-sm sm:text-base"
+                            >
+                                Save Changes
                             </button>
                         </div>
                     </div>

@@ -71,6 +71,30 @@ def get_upcoming_schedules(
         schedule_model.Schedule.court_date <= future
     ).all()
 
+@router.put("/{schedule_id}", response_model=ScheduleResponse)
+def update_schedule(
+    schedule_id: int,
+    schedule: ScheduleCreate,
+    current_user: user_model.User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    existing = db.query(schedule_model.Schedule).filter(
+        schedule_model.Schedule.id == schedule_id,
+        schedule_model.Schedule.user_id == current_user.id
+    ).first()
+
+    if not existing:
+        raise HTTPException(status_code=404, detail="Schedule not found")
+
+    existing.case_name = schedule.case_name
+    existing.court_date = schedule.court_date
+    existing.reminder_date = schedule.reminder_date
+    existing.status = schedule.status
+    existing.notification_enabled = schedule.notification_enabled
+    db.commit()
+    db.refresh(existing)
+    return existing
+
 @router.delete("/{schedule_id}")
 def delete_schedule(
     schedule_id: int,
