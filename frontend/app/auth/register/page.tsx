@@ -9,6 +9,7 @@ import * as z from "zod";
 import { Loader2, Eye, EyeOff, Lock, Mail, User, ShieldPlus } from "lucide-react";
 import toast from "react-hot-toast";
 import api from "@/lib/api";
+import { useAuth } from "@/lib/auth-context";
 
 const schema = z.object({
     full_name: z.string().min(2, "Name must be at least 2 characters"),
@@ -24,6 +25,7 @@ type FormData = z.infer<typeof schema>;
 
 export default function RegisterPage() {
     const router = useRouter();
+    const { login } = useAuth();
     const [loading, setLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
 
@@ -38,14 +40,15 @@ export default function RegisterPage() {
     const onSubmit = async (data: FormData) => {
         setLoading(true);
         try {
-            await api.post("/auth/register", {
+            const res = await api.post("/auth/register", {
                 email: data.email,
                 password: data.password,
                 full_name: data.full_name
             });
 
-            toast.success("Account created! Please log in.");
-            router.push("/auth/login");
+            await login(res.data.access_token);
+            toast.success("Welcome! Your account has been created.");
+            router.push("/");
         } catch (error: any) {
             console.error("Registration Error:", error);
             const detail = error.response?.data?.detail;

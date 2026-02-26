@@ -129,7 +129,7 @@ def seed_admin(db: Session):
 
 # ──────────────────────────── Endpoints ────────────────────────────
 
-@router.post("/register", response_model=UserResponse)
+@router.post("/register", response_model=Token)
 def register(user: UserCreate, db: Session = Depends(get_db)):
     if db.query(user_model.User).filter(user_model.User.email == user.email).first():
         raise HTTPException(status_code=400, detail="Email already registered")
@@ -142,7 +142,8 @@ def register(user: UserCreate, db: Session = Depends(get_db)):
     db.add(new_user)
     db.commit()
     db.refresh(new_user)
-    return new_user
+    token = create_access_token(data={"sub": new_user.email})
+    return {"access_token": token, "token_type": "bearer"}
 
 @router.post("/login", response_model=Token)
 def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
