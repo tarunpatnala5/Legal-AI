@@ -646,7 +646,7 @@ export default function SchedulePage() {
                                     <input
                                         type="time"
                                         value={newEvent.time}
-                                        onChange={e => setNewEvent({ ...newEvent, time: e.target.value })}
+                                        onChange={e => { setNewEvent({ ...newEvent, time: e.target.value }); e.target.blur(); }}
                                         className="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-xl px-3 sm:px-4 py-2.5 sm:py-3 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
                                     />
                                 </div>
@@ -742,7 +742,7 @@ export default function SchedulePage() {
                                     <input
                                         type="time"
                                         value={editForm.time}
-                                        onChange={e => setEditForm({ ...editForm, time: e.target.value })}
+                                        onChange={e => { setEditForm({ ...editForm, time: e.target.value }); e.target.blur(); }}
                                         className="w-full bg-slate-50 dark:bg-slate-900 border-none rounded-xl px-3 sm:px-4 py-2.5 sm:py-3 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
                                     />
                                 </div>
