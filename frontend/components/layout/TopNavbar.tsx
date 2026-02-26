@@ -1,6 +1,6 @@
 "use client";
 
-import { Bell, Search, Sun, Moon, LogIn, X } from "lucide-react";
+import { Bell, Search, Sun, Moon, LogIn } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { useTheme } from "@/lib/theme-context";
 import { useAuth } from "@/lib/auth-context";
@@ -20,8 +20,8 @@ export default function TopNavbar() {
     const { user, isLoggedIn, logout } = useAuth();
     const router = useRouter();
     const [notifications, setNotifications] = useState<ScheduleEvent[]>([]);
-    const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
-    const mobileSearchRef = useRef<HTMLInputElement>(null);
+    const [notificationsOpen, setNotificationsOpen] = useState(false);
+    const notificationsRef = useRef<HTMLDivElement>(null);
     const notifiedEvents = useRef(new Set<number>());
 
     const initials = user?.full_name
@@ -68,20 +68,28 @@ export default function TopNavbar() {
         return () => clearInterval(interval);
     }, [isLoggedIn]);
 
-    // Focus mobile search input when opened
+    // Close notifications when clicking outside
     useEffect(() => {
-        if (mobileSearchOpen) {
-            setTimeout(() => mobileSearchRef.current?.focus(), 50);
-        }
-    }, [mobileSearchOpen]);
+        const handleClickOutside = (e: Event) => {
+            if (notificationsRef.current && !notificationsRef.current.contains(e.target as Node)) {
+                setNotificationsOpen(false);
+            }
+        };
+        document.addEventListener("mousedown", handleClickOutside);
+        document.addEventListener("touchstart", handleClickOutside);
+        return () => {
+            document.removeEventListener("mousedown", handleClickOutside);
+            document.removeEventListener("touchstart", handleClickOutside);
+        };
+    }, []);
 
     return (
         <div className="relative">
             <div className="h-14 sm:h-16 bg-background border-b border-slate-200 dark:border-slate-800 flex items-center justify-between px-3 sm:px-6 shadow-sm transition-colors duration-300">
-                {/* Left */}
+                {/* Left - search bar (both desktop and mobile) */}
                 <div className="flex items-center gap-2 flex-1">
                     <div className="w-10 lg:hidden" />
-                    <div className="hidden sm:flex items-center bg-slate-100 dark:bg-slate-800 px-3 sm:px-4 py-2 rounded-lg w-full max-w-md border border-transparent focus-within:border-blue-500 transition-all">
+                    <div className="flex items-center bg-slate-100 dark:bg-slate-800 px-3 sm:px-4 py-2 rounded-lg w-full max-w-md border border-transparent focus-within:border-blue-500 transition-all">
                         <Search className="w-4 h-4 sm:w-5 sm:h-5 text-slate-400 mr-2 sm:mr-3 shrink-0" />
                         <input
                             type="text"
@@ -94,14 +102,6 @@ export default function TopNavbar() {
                 {/* Right */}
                 <div className="flex items-center gap-2 sm:gap-4">
                     <button
-                        onClick={() => setMobileSearchOpen(prev => !prev)}
-                        className="sm:hidden p-2 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition"
-                        aria-label="Search"
-                    >
-                        {mobileSearchOpen ? <X size={18} /> : <Search size={18} />}
-                    </button>
-
-                    <button
                         onClick={toggleTheme}
                         className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full text-slate-600 dark:text-slate-400 transition"
                         title={theme === "dark" ? "Light Mode" : "Dark Mode"}
@@ -111,32 +111,38 @@ export default function TopNavbar() {
 
                     {/* Notifications (only when logged in) */}
                     {isLoggedIn && (
-                        <div className="relative group">
-                            <button className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full text-slate-600 dark:text-slate-400 relative transition">
+                        <div ref={notificationsRef} className="relative">
+                            <button
+                                onClick={() => setNotificationsOpen(prev => !prev)}
+                                className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full text-slate-600 dark:text-slate-400 relative transition"
+                                aria-label="Notifications"
+                            >
                                 <Bell size={18} />
                                 {notifications.length > 0 && (
                                     <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full border-2 border-white dark:border-slate-950 animate-pulse" />
                                 )}
                             </button>
-                            <div className="absolute right-0 top-full mt-2 w-72 sm:w-80 bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-slate-200 dark:border-slate-700 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50">
-                                <div className="p-3 sm:p-4 border-b border-slate-200 dark:border-slate-800">
-                                    <h3 className="font-semibold text-sm text-slate-800 dark:text-white">Upcoming Events (24h)</h3>
-                                </div>
-                                <div className="max-h-64 overflow-y-auto">
-                                    {notifications.length === 0 ? (
-                                        <div className="p-4 text-center text-slate-500 text-xs">No upcoming events</div>
-                                    ) : (
-                                        notifications.map(n => (
-                                            <div key={n.id} className="p-3 hover:bg-slate-50 dark:hover:bg-slate-800 border-b last:border-0 border-slate-100 dark:border-slate-800 transition">
-                                                <div className="font-medium text-xs text-slate-800 dark:text-slate-200">{n.case_name}</div>
-                                                <div className="text-[10px] text-slate-500 mt-1">
-                                                    {new Date(n.court_date).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                            {notificationsOpen && (
+                                <div className="absolute right-0 top-full mt-2 w-72 sm:w-80 bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-slate-200 dark:border-slate-700 z-50">
+                                    <div className="p-3 sm:p-4 border-b border-slate-200 dark:border-slate-800">
+                                        <h3 className="font-semibold text-sm text-slate-800 dark:text-white">Upcoming Events (24h)</h3>
+                                    </div>
+                                    <div className="max-h-64 overflow-y-auto">
+                                        {notifications.length === 0 ? (
+                                            <div className="p-4 text-center text-slate-500 text-xs">No upcoming events</div>
+                                        ) : (
+                                            notifications.map(n => (
+                                                <div key={n.id} className="p-3 hover:bg-slate-50 dark:hover:bg-slate-800 border-b last:border-0 border-slate-100 dark:border-slate-800 transition">
+                                                    <div className="font-medium text-xs text-slate-800 dark:text-slate-200">{n.case_name}</div>
+                                                    <div className="text-[10px] text-slate-500 mt-1">
+                                                        {new Date(n.court_date).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                                                    </div>
                                                 </div>
-                                            </div>
-                                        ))
-                                    )}
+                                            ))
+                                        )}
+                                    </div>
                                 </div>
-                            </div>
+                            )}
                         </div>
                     )}
 
@@ -182,22 +188,6 @@ export default function TopNavbar() {
                     )}
                 </div>
             </div>
-
-            {/* Mobile search dropdown */}
-            {mobileSearchOpen && (
-                <div className="sm:hidden absolute top-full left-0 right-0 z-40 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-3 py-3 shadow-lg">
-                    <div className="flex items-center bg-slate-100 dark:bg-slate-800 px-3 py-2 rounded-lg border border-transparent focus-within:border-blue-500 transition-all">
-                        <Search className="w-4 h-4 text-slate-400 mr-2 shrink-0" />
-                        <input
-                            ref={mobileSearchRef}
-                            type="text"
-                            placeholder="Search cases, statutes..."
-                            className="bg-transparent border-none outline-none w-full text-sm text-slate-700 dark:text-slate-200 placeholder:text-slate-400"
-                            onKeyDown={(e) => e.key === "Escape" && setMobileSearchOpen(false)}
-                        />
-                    </div>
-                </div>
-            )}
         </div>
     );
 }
