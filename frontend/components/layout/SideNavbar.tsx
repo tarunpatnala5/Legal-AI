@@ -91,7 +91,7 @@ export default function SideNavbar() {
             {/* Mobile Menu Button */}
             <button
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                className="lg:hidden fixed top-4 left-4 z-50 p-2 bg-white dark:bg-slate-900 rounded-lg shadow-lg border border-slate-200 dark:border-slate-800"
+                className="lg:hidden fixed top-2 left-3 z-50 p-2 bg-white dark:bg-slate-900 rounded-lg shadow-lg border border-slate-200 dark:border-slate-800"
             >
                 {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
             </button>

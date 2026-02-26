@@ -247,13 +247,13 @@ export default function ChatPage() {
     /* Sessions sidebar - drawer on mobile, column on desktop */
     const sessionsPanel = (
         <div className="flex flex-col h-full bg-white dark:bg-slate-800 border-r border-slate-200 dark:border-slate-800">
-            <div className="p-3 sm:p-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between shrink-0">
+            <div className="p-3 sm:p-4 border-b border-slate-200 dark:border-slate-800 flex items-center gap-3 shrink-0">
                 <span className="font-semibold text-slate-800 dark:text-white lg:block hidden">Conversations</span>
                 <button
                     onClick={handleNewSession}
                     className="flex-1 lg:flex-none flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white py-2.5 px-4 rounded-xl text-sm font-medium transition min-h-[44px]"
                 >
-                    <Plus size={18} /> New Chat
+                    New Chat
                 </button>
                 <button
                     onClick={() => setMobileSessionsOpen(false)}
