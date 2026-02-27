@@ -129,7 +129,7 @@ export default function SideNavbar() {
                             className="flex items-center gap-2 font-bold text-xl text-blue-600 dark:text-blue-400"
                         >
                             <Scale className="w-6 h-6" />
-                            <span>LegalAI</span>
+                            <span>Legal AI</span>
                         </motion.div>
                     )}
                     {isCollapsed && <Scale className="w-8 h-8 mx-auto text-blue-600 dark:text-blue-400" />}
