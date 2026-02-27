@@ -178,7 +178,15 @@ export default function ChatPage() {
             return;
         }
         try {
-            const dateTimeStr = `${eventData.date}T${eventData.time || "10:00"}:00`;
+            // Build a timezone-aware ISO string so the backend stores the correct local time.
+            // Without this, Python treats the naive datetime as UTC and shifts by the local offset.
+            const offsetMins = new Date().getTimezoneOffset(); // e.g. -330 for IST (UTC+5:30)
+            const sign = offsetMins <= 0 ? "+" : "-";
+            const absOffset = Math.abs(offsetMins);
+            const hh = String(Math.floor(absOffset / 60)).padStart(2, "0");
+            const mm = String(absOffset % 60).padStart(2, "0");
+            const tzOffset = `${sign}${hh}:${mm}`; // e.g. "+05:30"
+            const dateTimeStr = `${eventData.date}T${eventData.time || "10:00"}:00${tzOffset}`;
 
             await api.post("/schedule/", {
                 case_name: eventData.title,
