@@ -5,7 +5,7 @@ from config import settings
 
 class AIService:
     def __init__(self):
-        self.api_key = "tgp_v1_ftT7HbWUegQ06EoF9ub_VNtu0o7ZJsUpzVPGiD-QfBs"
+        self.api_key = settings.TOGETHER_API_KEY or ""
         self.base_url = "https://api.together.xyz/v1/chat/completions"
         self.model = "mistralai/Mixtral-8x7B-Instruct-v0.1" 
         # Using Mixtral-8x7B for 32k context window to handle large legal documents.
@@ -61,7 +61,6 @@ class AIService:
         }
 
         try:
-            # print(f"DEBUG: Sending payload to AI (model: {self.model}): {str(payload)[:500]}...") # Uncomment for persistent debug
             response = requests.post(self.base_url, json=payload, headers=headers)
             
             if response.status_code != 200:
@@ -73,7 +72,7 @@ class AIService:
             return data['choices'][0]['message']['content']
         except Exception as e:
             print(f"Error calling Together AI: {e}")
-            return f"I apologize, but I am currently unable to process your request. Error details: {str(e)}"
+            return "I'm sorry, I'm unable to process your request right now. The AI service may be temporarily unavailable. Please try again in a moment."
 
     def draft_legal_document(self, topic, details):
         prompt = f"Draft a detailed legal document regarding '{topic}'.\n\nDetails:\n{details}\n\nFormat strictly as a professional {topic} under Indian Law."

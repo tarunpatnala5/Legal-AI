@@ -9,6 +9,7 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 525600  # 1 year
     
     # External APIs
+    TOGETHER_API_KEY: Optional[str] = None
     GOOGLE_TRANSLATE_API_KEY: Optional[str] = None
     HUGGINGFACE_API_KEY: Optional[str] = None
     
