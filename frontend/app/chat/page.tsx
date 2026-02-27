@@ -178,15 +178,12 @@ export default function ChatPage() {
             return;
         }
         try {
-            // Build a timezone-aware ISO string so the backend stores the correct local time.
-            // Without this, Python treats the naive datetime as UTC and shifts by the local offset.
-            const offsetMins = new Date().getTimezoneOffset(); // e.g. -330 for IST (UTC+5:30)
-            const sign = offsetMins <= 0 ? "+" : "-";
-            const absOffset = Math.abs(offsetMins);
-            const hh = String(Math.floor(absOffset / 60)).padStart(2, "0");
-            const mm = String(absOffset % 60).padStart(2, "0");
-            const tzOffset = `${sign}${hh}:${mm}`; // e.g. "+05:30"
-            const dateTimeStr = `${eventData.date}T${eventData.time || "10:00"}:00${tzOffset}`;
+            // Use the same local-date construction as the schedule page's handleAddEvent.
+            // Building Date from parts (not a string) avoids any UTC/timezone parsing ambiguity.
+            const [year, month, day] = (eventData.date as string).split('-').map(Number);
+            const timeParts = (eventData.time || "10:00").split(':').map(Number);
+            const localDate = new Date(year, month - 1, day, timeParts[0], timeParts[1] || 0, 0);
+            const dateTimeStr = localDate.toISOString(); // UTC ISO string the backend expects
 
             await api.post("/schedule/", {
                 case_name: eventData.title,
