@@ -32,7 +32,7 @@ def fetch_live_judgments():
     links = soup.find_all('a', href=re.compile(r'view-pdf'))
     
     today = datetime.now()
-    one_week_ago = today - timedelta(days=7)
+    one_month_ago = today - timedelta(days=30)
     
     unique_links = set()
 
@@ -75,7 +75,7 @@ def fetch_live_judgments():
         # If we still don't have a date, skip or include carefully. 
         # But user asked for specific date range.
         if date_obj:
-            if one_week_ago <= date_obj <= today + timedelta(days=1): # +1 just in case of timezone diffs
+            if one_month_ago <= date_obj <= today + timedelta(days=1): # +1 just in case of timezone diffs
                  pass
             else:
                 continue

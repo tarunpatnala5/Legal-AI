@@ -120,7 +120,7 @@ export default function Home() {
             <span className="font-semibold">Live Judgments</span>
           </div>
           <div className="text-3xl font-bold text-slate-800 dark:text-white">{judgments.length}</div>
-          <p className="text-xs text-slate-500 mt-1">Updates this week</p>
+          <p className="text-xs text-slate-500 mt-1">Updates this month</p>
         </div>
 
         {/* Upcoming Hearings */}
